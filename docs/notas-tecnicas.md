@@ -308,3 +308,19 @@ En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.m
   - **`tests/web/medir-web.mjs` en Edge de Windows:** cada cambio se ve en 0,1–0,86 s, y un `/refresh` sintético de 3 lotes se ve avanzar en el banner hasta «Listo · 3 sesiones nuevas».
   - **`pnpm test:web`** (`tests/web/interaccion.mjs`, Playwright, en Chromium y Firefox): pestañas por clic y teclas, `#ancla`, navegación pedida por un comando (0,5–0,8 s), datos nuevos sin recargar y sin volver arriba, tema oscuro, móvil sin scroll horizontal y ninguna petición fuera de `file://`.
 - **Herramientas de desarrollo:** `playwright-core` como dependencia de desarrollo (pnpm), que usa los navegadores de `~/.cache/ms-playwright`. En esta máquina el Chromium de Linux no encuentra `libnspr4`; en vez de instalar paquetes del sistema, la prueba le pasa las librerías que trae el Firefox de Playwright (`LD_LIBRARY_PATH`). `pnpm demo <carpeta>` crea una carpeta con el historial sintético de 2 años (`tests/fixtures/historial.mjs`).
+
+## 9. Decisiones de la Fase 5 (Progreso)
+
+- **Mapa muscular:** la silueta de la maqueta (frente y espalda), con una zona por cada grupo de FORMATO §5. Se añaden antebrazo, aductor y espalda alta, que la maqueta dejaba en gris. Cinco tonos según las series de la semana (0, 4, 8, 12 y 16 o más) y un tooltip por zona. «Olvidados»: los grupos que la persona quiere trabajar (sus series objetivo de FICHA.md) que van por debajo de 4 series, como mucho 3.
+- **Pared de récords:** el mejor de cada ejercicio (principales primero) con su fecha corta. «Nuevo» si es de los últimos 7 días; entonces aparece un Rex pequeño que salta. Debajo, los PRs del mes y del año.
+- **Escala «carga»** (corrección de la Fase 2): una serie con kg pero de más de 10 repeticiones no tiene e1RM (Epley solo vale hasta 10). Antes eso daba un récord de «0 kg e1RM»; ahora ese ejercicio progresa por su mejor carga × repeticiones.
+- **Bloque:** las 6 últimas semanas de calendario.
+  - **Intensidad:** el % medio del e1RM vigente (el mejor de las 12 semanas anteriores) en las series de trabajo de los ejercicios principales.
+  - **Volumen:** las toneladas, normalizadas a la semana más alta.
+  - **Etiqueta:** `SEM n` si las sesiones traen `semana_programa`; si no, `S` y la semana ISO. «desc.» si el volumen queda por debajo del 70 % y la intensidad del 72 %.
+- **Calculadora de discos:** la tabla de la barra a 300 kg (en pasos del doble del disco más pequeño) viene **precalculada** en `datos.js`, con los colores de la maqueta, así que la página solo la consulta. Avisa si un peso no sale exacto con los discos de la config y propone el más cercano. El valor inicial es el último de `/gymhub:discos` (`.gymhub/discos.json`) o 100 kg.
+- `Esc` quita el foco de un campo, para que las teclas `1`–`5` vuelvan a cambiar de vista.
+- **Comprobado:**
+  - capturas en claro, en oscuro y a 560 px frente a `docs/maquetas/progreso.html`;
+  - `pnpm test:web`, que escribe pesos en la calculadora y comprueba los discos, el aviso de «no sale exacto» y el de fuera de rango, y los tooltips del mapa;
+  - tests de las cifras (`tests/progreso.test.mjs`).

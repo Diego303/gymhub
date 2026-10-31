@@ -44,6 +44,22 @@ for (const [nombre, lanzar] of NAVEGADORES) {
     await page.click("[data-v=diario]"); assert.equal(await vistaActiva(page), "diario"); assert.ok(await page.isVisible("#v-diario"));
     await page.keyboard.press("1"); assert.equal(await vistaActiva(page), "panel");
   });
+  await paso("Progreso: mapa con tooltips y calculadora de discos interactiva", async () => {
+    await page.keyboard.press("2");
+    await page.waitForSelector("#g-kg");
+    assert.ok((await page.$$("#g-mapa rect[data-tt]")).length >= 20);
+    await page.fill("#g-kg", "142.5");
+    assert.equal(await page.textContent("#g-pl"), "por lado: 25 + 25 + 10 + 1,25");
+    await page.fill("#g-kg", "121");
+    assert.match(await page.textContent("#g-err"), /No sale exacto con tus discos: el más cercano es 120 kg/);
+    await page.fill("#g-kg", "10");
+    assert.match(await page.textContent("#g-err"), /Pon un peso entre 20 y 300 kg/);
+    await page.keyboard.press("1");
+    assert.equal(await vistaActiva(page), "progreso", "en el campo, «1» se escribe");
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("1");
+    assert.equal(await vistaActiva(page), "panel", "Esc quita el foco y las teclas vuelven a cambiar de vista");
+  });
   await paso("#ancla al abrir", async () => {
     const p2 = await ctx.newPage(); await p2.goto(url + "#analisis?modo=volumen");
     assert.equal(await vistaActiva(p2), "analisis"); await p2.close();

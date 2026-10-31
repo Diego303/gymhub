@@ -26,6 +26,10 @@ input{font:inherit;padding:4px 8px;border:.5px solid var(--border-strong);border
 .r-panel-1{grid-template-columns:minmax(0,1fr) 170px}
 .r-kpis{grid-template-columns:repeat(4,minmax(0,1fr));align-content:start}
 .r-dos{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.r-dos-igual{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.r-dos-b{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.chip-nuevo{font-size:11px;padding:0 5px;border-radius:4px;background:var(--bg-warning);color:var(--text-warning)}
+.rexmini svg{animation:rex-salto .8s ease-out infinite;image-rendering:pixelated}
 .span4{grid-column:span 4}
 .mt8{margin-top:8px}
 /* cabecera y pestañas */
@@ -83,7 +87,7 @@ svg text{font-family:var(--font-mono)}
 @media (max-width:700px){
   .grupos2{grid-template-columns:1fr}
   body{padding:10px}
-  .r-panel-1,.r-dos{grid-template-columns:minmax(0,1fr)}
+  .r-panel-1,.r-dos,.r-dos-igual,.r-dos-b{grid-template-columns:minmax(0,1fr)}
   .r-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .span4{grid-column:span 2}
   .cal{grid-auto-columns:minmax(8px,1fr)}
@@ -170,6 +174,7 @@ function irA(v, params = {}, { escribirHash = true } = {}) {
 }
 window.addEventListener("hashchange", () => { const { v, params } = leerHash(); irA(v, params, { escribirHash: false }); });
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.activeElement && document.activeElement.blur) { document.activeElement.blur(); return; }
   if (e.target.closest && e.target.closest("input,textarea,select") || e.ctrlKey || e.metaKey || e.altKey) return;
   const n = Number(e.key);
   if (n >= 1 && n <= VISTAS.length) irA(VISTAS[n - 1][0]);
@@ -361,11 +366,84 @@ function pintarPanel() {
 // Las demás vistas se añaden aquí (Fases 5 y 6).
 window.gymhub = { bloque, esc, fmt, barra, HINT, MARCA, MARCA2, MARCA3, MARCA4, VERDE, AZUL, AMBAR, NIV, get D() { return D; }, get sub() { return sub; }, irA, rexSVG };
 
-// ── Arranque ──
-const inicio = leerHash();
-irA(inicio.v, inicio.params, { escribirHash: !!location.hash });
-latido();
-setInterval(refrescarRelojes, 1000);
+// ── Arranque (diferido: así los scripts de las vistas, más abajo, ya se han registrado) ──
+setTimeout(() => {
+  const inicio = leerHash();
+  irA(inicio.v, inicio.params, { escribirHash: !!location.hash });
+  latido();
+  setInterval(refrescarRelojes, 1000);
+}, 0);
+})();
+</script>
+<script>
+// ── Vista Progreso (PLAN §2.2) ──
+(() => {
+const G = window.gymhub, { bloque, esc, fmt } = G;
+const NIV_MAPA = ["var(--cal-0)", G.MARCA3, G.MARCA2, G.MARCA, G.MARCA4];
+// Silueta 46×85 de la maqueta: [x, y, ancho, alto, grupo, radio]
+const FRENTE = [[18, 1, 10, 10, null, 5], [9, 13, 7, 6, "hombro"], [30, 13, 7, 6, "hombro"], [16, 13, 14, 10, "pecho"], [17, 24, 12, 13, "abdomen"], [7, 20, 6, 11, "biceps"], [33, 20, 6, 11, "biceps"], [6, 32, 5, 11, "antebrazo"], [35, 32, 5, 11, "antebrazo"], [15, 38, 16, 6, "aductor"], [15, 45, 7, 18, "cuadriceps"], [24, 45, 7, 18, "cuadriceps"], [16, 65, 5, 15, "gemelo"], [25, 65, 5, 15, "gemelo"]];
+const DETRAS = [[18, 1, 10, 10, null, 5], [16, 12, 14, 6, "trapecio"], [9, 13, 7, 6, "hombro"], [30, 13, 7, 6, "hombro"], [15, 19, 16, 5, "espalda-alta"], [15, 24, 16, 8, "dorsal"], [18, 33, 10, 5, "lumbar"], [7, 20, 6, 11, "triceps"], [33, 20, 6, 11, "triceps"], [6, 32, 5, 11, "antebrazo"], [35, 32, 5, 11, "antebrazo"], [15, 39, 16, 8, "gluteo"], [15, 48, 7, 15, "femoral"], [24, 48, 7, 15, "femoral"], [16, 65, 5, 15, "gemelo"], [25, 65, 5, 15, "gemelo"]];
+const cuerpo = (zonas, mapa) => zonas.map(([x, y, w, h, g, r = 2]) => {
+  const d = g && mapa.grupos[g];
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${d ? NIV_MAPA[d.nivel] : "var(--cal-0)"}"${d ? ` data-tt="${esc(d.nombre)}: ${fmt(d.series)} series esta semana"` : ""}/>`;
+}).join("");
+window.pintar_progreso = () => {
+  const P = G.D.progreso || {};
+  const cont = document.getElementById("v-progreso");
+  if (!cont.dataset.armado) {
+    cont.dataset.armado = "1";
+    cont.innerHTML = `<div class="rejilla r-dos-igual"><div class="box" id="g-mapa"></div><div class="box" id="g-rec"></div></div>
+      <div class="rejilla r-dos-b mt8"><div class="box" id="g-blq"></div><div class="box" id="g-disc"></div></div>
+      <div class="pie" id="g-hist"></div>`;
+  }
+  if (P.error) { cont.innerHTML = `<div class="box mut">Error al calcular esta vista: ${esc(P.error)}</div>`; delete cont.dataset.armado; return; }
+  bloque("g-mapa", { m: P.mapa, v: P.vacio }, ({ m, v }) => `<div class="lab">Mapa muscular · series esta semana</div>
+    <div style="display:flex;justify-content:space-around;align-items:flex-end">
+      <div style="text-align:center"><svg width="92" height="170" viewBox="0 0 46 85" role="img"><title>Vista frontal</title>${cuerpo(FRENTE, m)}</svg><div class="mut peq">delante</div></div>
+      <div style="text-align:center"><svg width="92" height="170" viewBox="0 0 46 85" role="img"><title>Vista trasera</title>${cuerpo(DETRAS, m)}</svg><div class="mut peq">detrás</div></div>
+    </div>
+    <div class="fila peq" style="margin-top:8px;flex-wrap:wrap"><span class="mut">0 ${NIV_MAPA.map((c) => `<span style="color:${c}">■</span>`).join("")} 16+</span>
+      <span>${m.mas ? `más trabajado: ${esc(m.mas.nombre.toLowerCase())} ${fmt(m.mas.series)}` : ""}</span></div>
+    ${m.olvidados.length ? `<div class="peq" style="margin-top:4px"><span style="color:var(--text-warning)">▲</span> olvidados: ${m.olvidados.map((o) => `${esc(o.nombre.toLowerCase())} ${fmt(o.series)}`).join(" · ")}</div>` : ""}
+    ${v ? `<div class="vacio">${G.HINT}</div>` : ""}`);
+  bloque("g-rec", { r: P.records, mes: P.prs_mes, anio: P.prs_anio, nuevo: P.pr_nuevo, total: P.records_total }, ({ r, mes, anio, nuevo, total }) => `<div class="fila" style="align-items:center"><span class="lab">Pared de récords</span>${nuevo ? `<span class="rexmini" title="Rex celebra un récord nuevo">${G.rexSVG("", { dy: -3 }).replace('width="96" height="84"', 'width="38" height="33"')}</span>` : ""}</div>
+    ${(r || []).map((x) => `<div class="fila" style="padding:5px 0;border-bottom:.5px solid var(--border)"><span>${esc(x.nombre)}${x.nuevo ? ' <span class="chip-nuevo">nuevo</span>' : ""}</span><span style="white-space:nowrap"><span style="font-weight:500">${esc(x.valor)}</span> <span class="mut peq" data-tt="${esc(x.serie)}">${esc(x.tipo === "e1RM" ? "e1RM" : x.serie)} · ${esc(x.fecha_texto)}</span></span></div>`).join("") || `<div class="vacio">Sin récords todavía: ${G.HINT}</div>`}
+    <div class="mut peq" style="margin-top:6px">${mes} PR${mes === 1 ? "" : "s"} este mes · ${anio} este año${total > (r || []).length ? ` · ${total} ejercicios en records.md` : ""}</div>`);
+  bloque("g-blq", P.bloque, (b) => `<div class="fila"><span class="lab">${b && b.programa ? `Bloque · ${esc(b.programa.toLowerCase())}` : "Últimas 6 semanas"}</span><span class="mut peq"><span style="color:${G.MARCA}">■</span> intensidad <span style="color:${G.MARCA2}">■</span> volumen</span></div>
+    <div style="display:flex;align-items:flex-end;gap:10px;height:110px">${(b ? b.semanas : []).map((w) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px" data-tt="semana del ${esc(w.inicio)} · ${w.sesiones} sesiones · ${w.intensidad === null ? "sin intensidad" : `intensidad ${w.intensidad} %`} · ${fmt(w.toneladas)} t">
+      <span class="peq">${w.intensidad === null ? "—" : w.intensidad + "%"}</span>
+      <div style="display:flex;gap:3px;align-items:flex-end;height:70px;${w.descarga ? "opacity:.5" : ""}"><div style="width:11px;height:${Math.round(w.intensidad_alto * 0.7)}px;background:${G.MARCA};border-radius:2px 2px 0 0"></div><div style="width:11px;height:${Math.round(w.volumen_pct * 0.7)}px;background:${G.MARCA2};border-radius:2px 2px 0 0"></div></div>
+      <span class="peq ${w.actual ? "" : "mut"}" style="${w.actual ? `color:${G.MARCA};font-weight:500` : ""}">${w.actual ? "▲" : ""}${w.descarga ? "desc." : esc(w.etiqueta)}</span></div>`).join("")}</div>`);
+  pintarDiscos(P.discos);
+  bloque("g-hist", P.historial, (h) => `<span>Historial · ${fmt(h.sesiones, 0)} sesiones · ${fmt(h.toneladas, 0)} t${h.desde ? ` · desde ${esc(h.desde)}` : ""}</span><span class="mut">${h.cardio_semana_min ? `cardio semana ${h.cardio_semana_min} min` : ""}${h.peso ? `${h.cardio_semana_min ? " · " : ""}peso ${fmt(h.peso.kg)} kg (${esc(h.peso.fecha)})` : ""}</span>`);
+};
+// Calculadora de discos: consulta la tabla que trae datos.js (no calcula).
+let kgUsuario = null;
+function pintarDiscos(d) {
+  if (!d) return;
+  const valor = G.sub.kg ?? kgUsuario ?? d.valor;
+  bloque("g-disc", { d: { barra: d.barra, paso: d.paso, hasta: d.hasta, n: Object.keys(d.tabla).length }, valor }, () => `<div class="lab">Calculadora de discos</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><input id="g-kg" type="number" value="${esc(valor)}" min="${d.barra}" max="${d.hasta}" step="${d.paso}" style="width:90px" aria-label="kilos totales"><span class="mut">kg · barra ${fmt(d.barra)}</span></div>
+    <div id="g-err" style="font-size:13px;color:var(--text-danger)"></div>
+    <div id="g-barra" style="display:flex;align-items:center;justify-content:center;height:70px"></div>
+    <div id="g-pl" class="mut peq" style="text-align:center"></div>`);
+  const input = document.getElementById("g-kg");
+  if (!input.dataset.ok) { input.dataset.ok = "1"; input.addEventListener("input", () => { kgUsuario = input.value; dibujarBarra(G.D.progreso.discos, input.value); }); }
+  dibujarBarra(d, input.value);
+}
+function dibujarBarra(d, texto) {
+  const err = document.getElementById("g-err"), barra = document.getElementById("g-barra"), pl = document.getElementById("g-pl");
+  const v = Number(String(texto).replace(",", "."));
+  if (!isFinite(v) || v < d.barra || v > d.hasta) { err.textContent = `Pon un peso entre ${G.fmt(d.barra)} y ${d.hasta} kg`; barra.innerHTML = ""; pl.textContent = ""; return; }
+  const claves = Object.keys(d.tabla).map(Number);
+  const exacta = claves.find((k) => Math.abs(k - v) < 1e-6);
+  const cerca = exacta ?? claves.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
+  const discos = d.tabla[String(cerca)];
+  err.textContent = exacta === undefined ? `No sale exacto con tus discos: el más cercano es ${G.fmt(cerca)} kg` : "";
+  const placas = discos.map((p) => `<div title="${G.fmt(p)} kg" style="width:9px;height:${d.altos[p]}px;background:${d.colores[p]};border-radius:2px;border:.5px solid var(--border-strong)"></div>`).join("");
+  barra.innerHTML = `<div style="display:flex;align-items:center;gap:2px;flex-direction:row-reverse">${placas}</div><div style="width:70px;height:5px;background:#B4B2A9"></div><div style="display:flex;align-items:center;gap:2px">${placas}</div>`;
+  pl.textContent = discos.length ? "por lado: " + discos.map((p) => G.fmt(p, 2)).join(" + ") : "solo la barra";
+}
 })();
 </script>
 </body></html>
