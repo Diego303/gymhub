@@ -83,3 +83,18 @@ test("leer y escribir no salen de la carpeta ni tocan sesiones/", () => {
     assert.match(w.salida, /copia del anterior/);
   } finally { t.limpiar(); }
 });
+
+test("la carpeta de la sesión manda si es una carpeta de gymhub (instalación de proyecto en varias carpetas)", () => {
+  const t = temporal();
+  try {
+    const a = join(t.dir, "A"), b = join(t.dir, "B");
+    cli(t.dir, ["configurar", a]);
+    cli(t.dir, ["configurar", b]); // la config apunta ahora a B
+    cli(t.dir, ["ficha", "--dias", "5"], { cwd: a });
+    assert.match(readFileSync(join(a, "FICHA.md"), "utf8"), /- dias_semana: 5/, "desde A, se edita A");
+    assert.doesNotMatch(readFileSync(join(b, "FICHA.md"), "utf8"), /- dias_semana: 5/);
+    assert.match(cli(t.dir, ["carpeta"], { cwd: a }).salida, new RegExp(`${a} · con estructura \\(la de esta sesión`));
+    cli(t.dir, ["ficha", "--dias", "3"], { cwd: t.dir });
+    assert.match(readFileSync(join(b, "FICHA.md"), "utf8"), /- dias_semana: 3/, "desde otro sitio, la configurada");
+  } finally { t.limpiar(); }
+});

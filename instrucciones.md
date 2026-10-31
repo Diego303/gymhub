@@ -17,6 +17,10 @@ mkdir -p /mnt/d/MiGimnasio
 cd /mnt/d/MiGimnasio
 ```
 
+- **Carpeta nueva o que ya existe:** las dos valen. Si ya tiene cosas (por ejemplo, tus notas antiguas), no se toca nada: `/gymhub:configurar` solo añade lo que falta y nunca sobrescribe. Después, mueve tus notas a `CONTEXTO/` (paso 4).
+- **Ruta con espacios:** ponla entre comillas: `mkdir -p "/mnt/d/Mi Gimnasio"` y `cd "/mnt/d/Mi Gimnasio"`.
+- **Ruta de Windows:** en la terminal de WSL, `D:\MiGimnasio` es `/mnt/d/MiGimnasio`.
+
 ## 2. Instala gymhub solo en esa carpeta
 
 Desde **dentro** de la carpeta, elige una de estas dos formas.
@@ -44,7 +48,7 @@ claude
 ```
 
 1. Si te pregunta si confías en la carpeta, di que sí.
-2. Escribe `/gymhub:configurar`.
+2. Escribe `/gymhub:configurar`. Si no tienes Node.js 20, te lo dice aquí.
    - Cuando te pregunte qué carpeta usar, elige **el directorio de la sesión** (la carpeta en la que estás).
    - Te pregunta los días que quieres entrenar por semana, tus objetivos de fuerza y si tienes alguna lesión. Todo es opcional; lo que digas va a `FICHA.md`.
 3. Se abre tu web en el navegador. **Guárdala en favoritos:** es el fichero `.gymhub/web/dashboard.html` de tu carpeta (en Windows, por ejemplo, `D:\MiGimnasio\.gymhub\web\dashboard.html`).
@@ -53,12 +57,17 @@ Ya tienes la estructura: `CONTEXTO/` (tu bandeja de entrada), `FICHA.md`, `sesio
 
 > **Truco:** los comandos llevan delante `gymhub:`. Escribe `/refre` y pulsa **Tab**, y se completa solo.
 
+> **Permisos:** gymhub hace su trabajo con un script propio (`node …/bin/gymhub.mjs`), que sus comandos ya tienen permitido. Si en algún momento Claude Code te pide permiso para ese script o para cargar la skill de gymhub, acepta. Con «no volver a preguntar», no lo vuelve a hacer.
+
+> **Siempre en esta carpeta:** abre Claude Code desde ella (`cd /mnt/d/MiGimnasio && claude`) y gymhub usará esta carpeta. Fuera de ella, los comandos de gymhub no aparecen.
+
 ## 4. Importa lo que ya tengas
 
 1. Copia en `CONTEXTO/` todo lo que tengas, como esté: notas (`.txt`, `.md`), el CSV de una app, un export de Telegram (`result.json`) o de WhatsApp (`.txt`), fotos de tu libreta… Puedes usar subcarpetas.
 2. Deja la web abierta y, en Claude Code, escribe `/gymhub:refresh`.
 3. Si hay mucho material, Claude primero mira una muestra y te hace unas pocas preguntas generales: el orden de las fechas, qué significan tus abreviaturas, qué es «pin 7» en tu máquina… Lo que contestes se guarda en `convenciones.md` y **no te lo vuelve a preguntar nunca**.
 4. Mira la web: verás «Normalizando · lote 3 de 12…» y cómo aparecen tus datos. No hace falta recargar.
+   - **Si tienes mucho historial,** tarda: unos segundos por lote de hasta 25 entrenos, por meses. Si se corta (cierras la terminal, te quedas sin sesión…), vuelve a escribir `/gymhub:refresh` y **sigue donde se quedó**: no repite ni duplica nada.
 5. Al terminar, Claude te dice cuántas sesiones ha importado, los PRs y las dudas. Lo importado se mueve, intacto, a `CONTEXTO/procesado/`.
 6. Si quedan dudas: `/gymhub:revision`. Te las enseña una a una para que confirmes o corrijas.
 
@@ -86,6 +95,8 @@ Ya tienes la estructura: `CONTEXTO/` (tu bandeja de entrada), `FICHA.md`, `sesio
 | Cambiar objetivos, peso, lesiones | Edita `FICHA.md` (o díselo a Claude) |
 | Corregir una sesión | Edita su fichero en `sesiones/` a mano: gymhub nunca sobrescribe tus cambios |
 | Ver o cambiar la carpeta | `/gymhub:carpeta` |
+| Mover o renombrar la carpeta | Muévela, vuelve a instalar gymhub dentro (paso 2) y abre `claude` allí: gymhub usa la carpeta en la que estás. Para la ruta guardada, `/gymhub:carpeta <ruta nueva>` |
+| Tener otra carpeta (por ejemplo, de prueba) | Repite los pasos 1 a 3 en ella. Cada una funciona por su lado: gymhub usa la carpeta en la que abres Claude Code |
 
 ## 7. Si algo no va
 

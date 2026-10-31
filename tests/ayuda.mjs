@@ -14,10 +14,10 @@ export function temporal(prefijo = "gymhub-test-") {
 }
 
 /** Ejecuta bin/gymhub.mjs con GYMHUB_CONFIG en `dir` y sin abrir el navegador. */
-export function cli(dir, args, { entrada, env = {} } = {}) {
+export function cli(dir, args, { entrada, env = {}, cwd } = {}) {
   mkdirSync(dir, { recursive: true });
   const r = spawnSync(process.execPath, [BIN, ...args], {
-    input: entrada, encoding: "utf8",
+    input: entrada, encoding: "utf8", cwd,
     env: { ...process.env, GYMHUB_CONFIG: join(dir, "config.json"), GYMHUB_NO_ABRIR: "1", GYMHUB_CARPETA: "", ...env },
   });
   return { codigo: r.status, salida: r.stdout, error: r.stderr };
