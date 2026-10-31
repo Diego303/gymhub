@@ -237,3 +237,45 @@ gymhub/
 - **`eventos.md`**, fichero nuevo en la carpeta de datos, para lo que no es una sesión: pausas, cambios de programa e hitos (FORMATO §3.8). Ejemplo: `- 2024-08-01 → 2024-08-15 · pausa · vacaciones`. Es fuente de verdad, así que no puede vivir en `.gymhub/`.
 - **records.md** se rehace entero salvo «Marcas declaradas». **FICHA.md** solo se toca en su sección «Estado actual». Las dos cosas pasan solo al cerrar un `/gymhub:refresh` (o con `derivar --md`), nunca al publicar.
 - **Caché:** `.gymhub/cache-sesiones.json` guarda cada sesión ya leída junto con su `mtime` y su tamaño. Así no se vuelven a leer cientos de ficheros en `/mnt/d` cada vez.
+
+## 7. Decisiones de la Fase 3 (`/gymhub:refresh`)
+
+- **Separar es determinista** (`lib/separar.mjs`): corta el material en elementos, no lo interpreta.
+  - **Texto:** se corta por líneas que empiezan con una fecha (o por cabeceras que la contienen), en cualquier formato: `12/03/23`, `16-03-23`, `2025-09-08`, `3/14`, `Lunes 3 marzo 2025`, `March 14th, 2025`, `Día 12 - marzo`, `29 oct`. Notaciones de series como `5/5/5/3` o `10/8/6` no cuentan como fecha.
+    - **Fechas ambiguas** (`03/04`): se resuelven con `convenciones.md`; si no, con las fechas sin ambigüedad del mismo fichero, o con un mes en el nombre del fichero (`april-2025.txt`). Si sigue sin resolverse, se marca AMBIGUA y decide Claude.
+    - **Sin año:** el del nombre del fichero, el de las primeras líneas o el de la fecha del fichero.
+  - **Telegram:** el export JSON (`result.json`) y el HTML. **WhatsApp:** el `.txt` exportado. Cada mensaje es un elemento, y la multimedia sin texto se ignora sola (y se cuenta). Las fotos de un chat van con su mensaje.
+  - **CSV:** las columnas se reconocen por su nombre, en español o en inglés. Cada día es un elemento con un **borrador determinista** en el formato estándar (cargas, repeticiones, RPE y tiempo ya puestos); Claude solo pone los ids, el tipo y lo que falte.
+  - **Imágenes:** las lee Claude con Read y quedan como mucho con `confianza: media`. Los demás formatos van como «otro», para que Claude decida.
+  - **Identidad:** cada elemento es el hash de su texto normalizado. En los mensajes de chat entran también la fecha y la hora, porque «hoy pierna» se repite.
+- **Lotes:** por meses, de 25 elementos como mucho, guardados en `.gymhub/importacion.json`. Se reanudan: un `refresh preparar` con una importación a medias continúa donde se quedó.
+- **Pasada de muestreo:** con más de 20 elementos nuevos y `convenciones.md` todavía vacío. `refresh muestra` enseña unos 30 elementos repartidos en el tiempo; Claude escribe `convenciones.md` y pregunta las dudas generales de una vez.
+- **`refresh guardar <n>`:** lo que propone Claude se recibe en bloques `@@@` (`skills/gymhub/guardar.md`), por heredoc o, si el heredoc no pasa, con `--fichero`. **Todo o nada:**
+  - todos los elementos del lote tienen que quedar en una sesión, un «ignorar» con motivo o un bloque que no es sesión (plantilla, marcas, evento);
+  - cada sesión se valida contra FORMATO y contra el catálogo (los ejercicios nuevos van en `@@@ ejercicios` en el mismo envío).
+
+  Si algo falla, no se escribe nada y el script dice qué corregir.
+- **Nada se pierde y nada se pisa:**
+  - El **original** de cada sesión lo pone el script, exacto, a partir de sus elementos, igual que la **fuente**.
+  - Una sesión existente **nunca se sobrescribe**. Si es idéntica, se omite; si es distinta, va a `AAAA-MM-DD-2.md` y se anota la duda en `revision.md`.
+  - Solo se reemplaza una sesión generada por gymhub que nadie ha tocado (su hash en `.gymhub/generadas.json`) y que sale de los mismos elementos, es decir, una reimportación. Lo editado a mano, nunca.
+  - Al **cerrar**, cada fichero de `CONTEXTO/` con todos sus elementos procesados se mueve, intacto, a `CONTEXTO/procesado/AAAA-MM-DD/`, y las subcarpetas que se quedan vacías se quitan.
+- **Web viva:** el banner de proceso se actualiza al empezar cada lote (`refresh lote`) y al guardarlo (que además recalcula `datos.json` y publica `datos.js`). Al cerrar: «Listo · N sesiones nuevas · N PRs · N dudas», con los PRs nuevos de esta importación.
+- **Cerrojo:** `.gymhub/cerrojo` (con `mkdir`, que es atómico) para que dos órdenes no escriban a la vez, por ejemplo dos subagentes con lotes distintos.
+- **Subagentes:** el comando permite repartir los lotes entre subagentes cuando hay más de 6, para no llenar el contexto. No se ha probado todavía con una importación grande (eso queda para la importación real de la Fase 8).
+- **Personas sintéticas** (`tests/fixtures/personas/`): las 5 de PLAN §4, cada una con su `CONTEXTO/`, sus sesiones esperadas (`esperado.mjs`) y su `convenciones.md`. El test separa, guarda lo esperado lote a lote, cierra y comprueba que no queda nada en `CONTEXTO/`, que cada sesión guarda su original y que repetir `/refresh` no duplica nada.
+- **Con Claude de verdad** (`scripts/e2e-persona.mjs <persona>`): importa la persona con `claude -p` y `/gymhub:refresh` en una carpeta temporal, y compara ejercicio a ejercicio con lo esperado. Resultados en el §7.1.
+
+### 7.1 Importación real con Claude (2026-10-31)
+
+Con `scripts/e2e-persona.mjs` y el modelo por defecto (Opus), en carpetas temporales y sin nadie que conteste preguntas (`claude -p`):
+
+| Persona | Tiempo | Coste | Sesiones | Ejercicios idénticos a lo esperado | Notas |
+|---|---|---|---|---|---|
+| 1 · telegráfica (es, máquinas, lb, `12'5`, Telegram) | 65–140 s | 0,49–0,82 USD | 7/7 | 21/21 y 20/21 en dos ejecuciones | En la segunda, «laterales 5 lb» quedó sin `/mano`: es interpretable. Las dudas de verdad (¿el remo es por mano?, ¿el 8/10 es antes o después?) fueron a `revision.md` |
+| 2 · inglés (lb, RPE, mes/día, superseries) | 54 s | 0,43 USD | 4/4 | 14/14 | «4/4 skipped, sick» quedó como pausa |
+| 3 · CSV de una app | 31 s | 0,36 USD | 3/3 | 9/9 | Añadió los nombres de la app como alias |
+| 4 · plantillas (prescrito/hecho, RIR, 1-5) | 71 s | 0,51 USD | 2/2 + 3 plantillas | 6/6 | Buscó el formato de plantilla, que ahora va en la guía |
+| 5 · calistenia y cardio (WhatsApp) | 43 s | 0,39 USD | 5/5 | 8/8 | Creó `pino-pared` en el catálogo |
+
+En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.md` escrito y las dudas concretas en `revision.md`. En la primera ejecución de la persona 1, Claude contó que un apóstrofo bloqueaba un heredoc. No se pudo reproducir: las pruebas con `12'5` y `didn't` dentro del heredoc pasan. Aun así, queda la alternativa `--fichero`.

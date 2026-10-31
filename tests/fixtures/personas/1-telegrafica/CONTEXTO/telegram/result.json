@@ -1,0 +1,12 @@
+{
+  "name": "Entrenos",
+  "type": "personal_chat",
+  "id": 100000001,
+  "messages": [
+    { "id": 1, "type": "message", "date": "2024-05-06T18:40:00", "from": "Lucía", "text": "banca 4x6 52'5\njalon flecha 7 3x10\nfondos 3x8" },
+    { "id": 2, "type": "message", "date": "2024-05-06T18:41:00", "from": "Lucía", "media_type": "video_file", "file": "(File not included. Change data exporting settings to download.)", "text": "" },
+    { "id": 3, "type": "message", "date": "2024-05-08T19:10:00", "from": "Lucía", "text": [{ "type": "bold", "text": "pierna" }, ": sentadilla 4x6 72'5, prensa pin 8 3x12"] },
+    { "id": 4, "type": "message", "date": "2024-05-08T19:15:00", "from": "Lucía", "text": "rodilla bien" },
+    { "id": 5, "type": "service", "date": "2024-05-09T10:00:00", "action": "pin_message" }
+  ]
+}

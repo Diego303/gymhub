@@ -1,0 +1,18 @@
+Date,Workout,Exercise,Set,Weight (kg),Reps,Seconds,RPE,Notes
+2025-06-02 07:05,Push A,Bench Press (Barbell),1,70,8,,7,
+2025-06-02 07:05,Push A,Bench Press (Barbell),2,70,8,,8,
+2025-06-02 07:05,Push A,Bench Press (Barbell),3,70,7,,9,
+2025-06-02 07:05,Push A,Overhead Press (Barbell),1,40,8,,8,
+2025-06-02 07:05,Push A,Overhead Press (Barbell),2,40,8,,8.5,
+2025-06-02 07:05,Push A,Triceps Pushdown (Cable),1,25,12,,,
+2025-06-02 07:05,Push A,Triceps Pushdown (Cable),2,25,12,,,
+2025-06-04 07:10,Pull A,Deadlift (Barbell),1,120,5,,8,
+2025-06-04 07:10,Pull A,Deadlift (Barbell),2,120,5,,8.5,
+2025-06-04 07:10,Pull A,Lat Pulldown (Cable),1,55,10,,,
+2025-06-04 07:10,Pull A,Lat Pulldown (Cable),2,55,10,,,
+2025-06-04 07:10,Pull A,Hammer Curl (Dumbbell),1,14,10,,,"per hand"
+2025-06-06 18:30,Legs A,Squat (Barbell),1,90,6,,7,
+2025-06-06 18:30,Legs A,Squat (Barbell),2,90,6,,8,
+2025-06-06 18:30,Legs A,Squat (Barbell),3,90,6,,8.5,
+2025-06-06 18:30,Legs A,Leg Curl (Machine),1,40,12,,,
+2025-06-06 18:30,Legs A,Plank,1,,,60,,
