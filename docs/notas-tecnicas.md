@@ -370,3 +370,17 @@ En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.m
 - **Aviso de fin de descanso:** un proceso suelto que espera los segundos del descanso y muestra un toast de Windows (WinRT desde PowerShell, como en Huddle). En macOS, `osascript`; en Linux, `notify-send`. Se desactiva con `aviso_descanso: false` en la config o con `GYMHUB_NO_AVISO=1`. **No se ha lanzado un toast real** en estas pruebas, para no llenarte de avisos; lo cubren los tests con el aviso desactivado.
 - `--` en la línea de órdenes del script: lo que va detrás es texto, aunque empiece por `--`.
 - **Prueba real:** `/gymhub:semana` y `/gymhub:ejercicio banca` en sesiones `claude -p` sobre una demo sintética. El fichero de la semana lleva las cifras del script y los ajustes de Claude, y la web quedó en `#ejercicios/press-banca`.
+
+## 12. Fase 8: pulido
+
+- **README definitivo:** sale de tu borrador, con lo que cambió en la Fase 0:
+  - comandos con el prefijo `/gymhub:` y el truco de Tab;
+  - Node ≥ 20 como requisito;
+  - instalación con alcance de proyecto, con la línea `/plugin install gymhub --marketplace Diego303/gymhub`, que es la que reconoce el validador del catálogo;
+  - `/gymhub:web` en lugar de `/gym`;
+  - cómo se comporta la web, `eventos.md` y la sección de desarrollo.
+- **Capturas** (`docs/capturas/`): las 5 vistas, el Panel en oscuro y el banner de una importación en marcha. Todas son de la demo sintética (`pnpm demo`) con «hoy» = 2026-10-31, hechas con `scripts/captura.mjs` (Edge sin ventana).
+- **Icono** (`.claude-plugin/icon.png`, 512 × 512): Rex con su mancuerna. `claude plugin validate . --profile directory` ya no avisa de nada.
+- **Capricho estacional** (como en Huddle): el 31 de octubre Rex lleva una calabaza a los pies y en diciembre un gorro rojo. Lo decide el script por la fecha (`rex.disfraz`).
+- **CHANGELOG** `v0.1.0`.
+- **Pendiente para publicar:** `docs/FORMATO.md` y `docs/maquetas/` no están versionados (decisión tuya). El plugin lee `docs/FORMATO.md` en cada `/gymhub:refresh` (`formato`), y el README enlaza los dos. Instalado desde GitHub, sin ellos, `formato` avisaría de que falta, la skill normalizaría solo con su guía y los enlaces del README fallarían.
