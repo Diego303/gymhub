@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gymhub</title>
+<style>body{margin:0;padding:32px;font-family:system-ui,"Segoe UI",sans-serif;background:#f5f4ef;color:#1f1e1d}@media (prefers-color-scheme:dark){body{background:#1a1a19;color:#f1efe8}}</style>
+</head><body><p>gymhub · la web llega en la Fase 4.</p><p id="v"></p>
+<script>
+(() => {
+  let actual = null;
+  const cargar = (f, fin) => { const s = document.createElement("script"); s.src = f + "?t=" + Date.now(); s.onload = () => { s.remove(); fin(true); }; s.onerror = () => { s.remove(); fin(false); }; document.head.appendChild(s); };
+  function latido() {
+    window.GYMHUB_VERSION = null;
+    cargar("version.js", (ok) => {
+      const v = window.GYMHUB_VERSION;
+      if (!ok || !v || (actual && actual.version === v)) return setTimeout(latido, 1000);
+      window.GYMHUB = null;
+      cargar("datos.js", () => { const d = window.GYMHUB; if (d && d.version === v) { actual = d; document.getElementById("v").textContent = "datos " + v; } setTimeout(latido, 1000); });
+    });
+  }
+  latido();
+})();
+</script></body></html>

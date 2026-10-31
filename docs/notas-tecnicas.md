@@ -195,3 +195,28 @@ gymhub/
 - **Permiso de la skill** y si se oculta del menú: en la Fase 1 (§2.4).
 - **Instalación real desde GitHub:** en la Fase 8, con permiso.
 - **Subagentes en paralelo para importaciones grandes:** existe la herramienta `Agent`; cómo heredan el permiso acotado del script se probará en la Fase 3.
+
+## 5. Decisiones de la Fase 1
+
+- **Un solo script, `bin/gymhub.mjs <subcomando>`.** Comprueba Node ≥ 20 antes de cargar nada. Los subcomandos viven en `lib/` y se registran en `lib/registro.mjs`, con importaciones estáticas: un `import()` dinámico con `await` en un ciclo de módulos se bloquearía.
+- **Variables para probar sin tocar nada real:**
+  - `GYMHUB_CONFIG`: otra ruta para la config;
+  - `GYMHUB_CARPETA`: otra carpeta de datos para una sola orden;
+  - `GYMHUB_NO_ABRIR=1`: no abre el navegador;
+  - `GYMHUB_HOY=AAAA-MM-DD`: fija «hoy» para los cálculos.
+
+  También se respeta `XDG_CONFIG_HOME`.
+- **`configurar <ruta>` exige la ruta.** La elige Claude con la persona (el directorio de la sesión, la configurada o la de por defecto: `/mnt/d/GIMNASIO` en WSL y `~/GIMNASIO` en el resto), así que el script nunca crea una carpeta que nadie ha pedido.
+  - Nunca sobrescribe: si la carpeta ya existe, solo añade lo que falte.
+  - Rechaza la carpeta del propio plugin.
+  - Avisa si, en WSL, la carpeta está fuera de `/mnt/<letra>`.
+- **Edición de ficheros de la persona:**
+  - `ficha` cambia FICHA.md por secciones (días, objetivos, peso, lesiones) y no toca los ejemplos comentados de la plantilla.
+  - `escribir <ruta>` solo acepta FICHA.md, convenciones.md, revision.md, `plantillas/*.md` y `semanas/AAAA-Www.md`, y guarda la versión anterior en `.gymhub/copias/`.
+  - Las sesiones solo se escriben con la importación (Fase 3).
+  - `leer` no sale de la carpeta de datos.
+- **FICHA.md** añade al ejemplo del plan tres secciones: `Datos` (peso corporal, sueño objetivo, umbral de la racha), `Referencias de fuerza` y `Rangos de equilibrio`, con los valores por defecto del plan. Las series objetivo admiten grupos agregados: `espalda`, `pierna`, `brazos` y `core`.
+- **Catálogo precargado:** 125 ejercicios con alias en español e inglés, sin alias ambiguos (lo comprueba un test), y un ejercicio principal por patrón del radar. **Fusión:** si un alias coincide con otro id, ese id se une al ejercicio (FORMATO §3.7).
+- **Tests:** `node --test` con la lista explícita de ficheros (`scripts/test.mjs`), porque Node 20 no admite globs. `pnpm lint` = `scripts/comprobar-web.mjs` (la web no puede hacer peticiones de red y solo carga `datos.js` y `version.js`) + `claude plugin validate .`.
+- **`docs/FORMATO.md` no está versionado** (decisión tuya). En este repo funciona, pero un plugin instalado desde GitHub no lo tendría: `formato` lo avisa y la skill normalizaría solo con su resumen. Hay que versionarlo antes de publicar.
+- **Prueba real:** `/gymhub:configurar <tmp>/GIMNASIO` y `/gymhub:carpeta` (mostrar y cambiar), en sesiones `claude -p` con la config aislada. Sin nadie a quien preguntar, se salta los objetivos. Ante una carpeta sin estructura, no la cambia y lo dice.

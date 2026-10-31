@@ -1,0 +1,8 @@
+{
+  "name": "gymhub",
+  "owner": { "name": "gymhub" },
+  "description": "gymhub: registro de gimnasio local con una web que se actualiza sola.",
+  "plugins": [
+    { "name": "gymhub", "source": "./", "description": "Importa tus entrenos en cualquier formato, calcula tus cifras y las muestra en una web local." }
+  ]
+}

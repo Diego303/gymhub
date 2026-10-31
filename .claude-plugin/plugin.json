@@ -1,0 +1,8 @@
+{
+  "name": "gymhub",
+  "version": "0.1.0",
+  "description": "Tu registro de gimnasio, vivo y local: escribe tus entrenos como quieras, Claude los ordena y una web local te enseña cómo vas.",
+  "author": { "name": "gymhub" },
+  "license": "MIT",
+  "keywords": ["gimnasio", "entrenamiento", "fitness", "registro", "dashboard"]
+}
