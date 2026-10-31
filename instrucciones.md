@@ -110,6 +110,7 @@ Ya tienes la estructura: `CONTEXTO/` (tu bandeja de entrada), `FICHA.md`, `sesio
 ## 8. Copias, actualizar y desinstalar
 
 - **Copia de seguridad:** toda tu información está en tu carpeta. `.gymhub/` se regenera solo y lo demás es Markdown. Basta con copiar la carpeta.
+- **Después de actualizar gymhub,** lo que ya importaste sigue valiendo (tus datos son tus Markdown). Haz un `/gymhub:refresh` (aunque no haya nada nuevo) o `/gymhub:web`: recalculan con la versión nueva y ponen al día la página de tu carpeta. Una pestaña ya abierta se recarga sola desde esta versión; si la tenías abierta con una versión anterior a la pestaña Semana, recárgala tú una vez (F5).
 - **Actualizar gymhub:**
   - instalado desde el repo local, basta con tener el repo al día; en una sesión abierta, `/reload-plugins`;
   - instalado desde GitHub, `claude plugin update gymhub --scope project` y después `/reload-plugins`.

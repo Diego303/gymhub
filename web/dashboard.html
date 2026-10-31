@@ -160,6 +160,9 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fmt = (x, dec = 1) => { if (x === null || x === undefined || !isFinite(x)) return "—"; const r = Math.round(x * 10 ** dec) / 10 ** dec; const [e, f] = Math.abs(r).toFixed(dec).split("."); const m = e.replace(/\B(?=(\d{3})+(?!\d))/g, "."); const fr = f && Number(f) ? "," + f.replace(/0+$/, "") : ""; return (r < 0 ? "−" : "") + m + fr; };
 const DEPURAR = /depurar/.test(location.search);
+// Versión de esta página (la pone el plugin al copiarla). Si datos.js trae otra, la página se ha
+// actualizado en disco: se recarga sola, una vez por versión, conservando el #ancla.
+const VERSION_WEB = "__GYMHUB_VERSION_WEB__";
 const log = (m) => { if (DEPURAR) console.log("GYMHUB-WEB " + m); };
 const VISTAS = [["panel", "Panel"], ["progreso", "Progreso"], ["analisis", "Análisis"], ["diario", "Diario"], ["ejercicios", "Ejercicios"], ["semana", "Semana"]];
 const MARCA = "#D85A30", MARCA2 = "#F0997B", MARCA3 = "#F5C4B3", MARCA4 = "#993C1D", VERDE = "#1D9E75", AZUL = "#378ADD", AMBAR = "#BA7517";
@@ -248,7 +251,15 @@ function latido() {
     window.GYMHUB = null;
     cargar("datos.js", (ok2) => {
       const d = window.GYMHUB;
-      if (ok2 && d && d.version === v) { D = d; log("v=" + d.version); alRecibir(); }
+      if (ok2 && d && d.version === v) {
+        if (d.version_web && VERSION_WEB.indexOf("__") !== 0 && d.version_web !== VERSION_WEB && sessionStorage.getItem("gymhub-recarga") !== d.version_web) {
+          sessionStorage.setItem("gymhub-recarga", d.version_web);
+          log("recarga=" + d.version_web);
+          location.reload();
+          return;
+        }
+        D = d; log("v=" + d.version); alRecibir();
+      }
       else log("datos-incompletos");
       programar();
     });

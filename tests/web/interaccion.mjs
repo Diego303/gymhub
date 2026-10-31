@@ -160,6 +160,29 @@ for (const [nombre, lanzar] of NAVEGADORES) {
     assert.ok(readFileSync(join(carpeta, "semanas", `${sin.clave}.md`), "utf8").startsWith(`---\nsemana: ${sin.clave}\n`));
     await page.keyboard.press("1");
   });
+  await paso("tras actualizar el plugin, la página abierta se recarga sola (una vez)", async () => {
+    const { readFileSync, writeFileSync } = await import("node:fs");
+    const web = join(carpeta, ".gymhub/web");
+    // Simula una página y unos datos de una versión anterior del plugin…
+    const actual = readFileSync(join(web, "dashboard.html"), "utf8");
+    const vActual = actual.match(/const VERSION_WEB = "([^"]+)"/)[1];
+    writeFileSync(join(web, "dashboard.html"), actual.replace(`const VERSION_WEB = "${vActual}"`, 'const VERSION_WEB = "vieja"'));
+    writeFileSync(join(web, "datos.js"), readFileSync(join(web, "datos.js"), "utf8").replace(/"version":"[^"]+"/, '"version":"vieja1"').replace(/"version_web":"[^"]+"/, '"version_web":"vieja"'));
+    writeFileSync(join(web, "version.js"), 'window.GYMHUB_VERSION = "vieja1";\n');
+    const p2 = await ctx.newPage();
+    let cargas = 0;
+    p2.on("load", () => { if (p2.url().startsWith("file:")) cargas++; }); // Firefox cuenta también about:blank
+    await p2.goto(url + "#semana");
+    await p2.waitForFunction(() => window.gymhub?.D?.version === "vieja1");
+    // …y luego cualquier publicación (un /refresh, un /semana) con el plugin nuevo
+    publicar(carpeta);
+    await p2.waitForFunction((v) => document.documentElement.innerHTML.includes(`const VERSION_WEB = "${v}"`), vActual, { timeout: 5000 });
+    await p2.waitForFunction(() => window.gymhub?.D?.version && window.gymhub.D.version !== "vieja1");
+    assert.equal(cargas, 2, `se ha recargado exactamente una vez (cargas: ${cargas})`);
+    assert.match(p2.url(), /#semana/);
+    assert.equal(await p2.$eval("[aria-selected=true]", (b) => b.dataset.v), "semana");
+    await p2.close();
+  });
   await paso("ningún error en la consola en las 6 vistas", async () => {
     for (const k of ["1", "2", "3", "4", "5", "6"]) { await page.keyboard.press(k); await page.waitForTimeout(150); }
     await page.keyboard.press("1");

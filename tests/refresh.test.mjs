@@ -170,3 +170,14 @@ test("una nota que crece: se vuelve a copiar entera y solo entra lo nuevo", asyn
   assert.deepEqual(readdirSync(join(carpeta, "sesiones/2026")), ["2026-03-01.md", "2026-03-08.md"]);
   assert.ok(existsSync(join(carpeta, "CONTEXTO/procesado/2026-10-31/notas-2.txt")), "la segunda copia se archiva junto a la primera");
 });
+
+test("un /refresh sin nada nuevo recalcula y deja la página al día (tras actualizar gymhub)", () => {
+  writeFileSync(join(carpeta, ".gymhub/datos.json"), "{}");
+  writeFileSync(join(carpeta, ".gymhub/web/dashboard.html"), "<!DOCTYPE html><p>página vieja</p>");
+  const { imp } = preparar(carpeta);
+  assert.equal(imp.lotes.length, 0);
+  const datos = JSON.parse(readFileSync(join(carpeta, ".gymhub/datos.json"), "utf8"));
+  assert.ok("semana" in datos && "panel" in datos, "datos.json recalculado");
+  assert.match(readFileSync(join(carpeta, ".gymhub/web/dashboard.html"), "utf8"), /data-vista="semana"/);
+  assert.match(readFileSync(join(carpeta, ".gymhub/web/datos.js"), "utf8"), /"version_web":"[0-9a-f]{12}"/);
+});

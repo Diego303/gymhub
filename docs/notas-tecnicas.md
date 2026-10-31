@@ -430,3 +430,14 @@ En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.m
   - **Las 5 vistas anteriores, iguales:** `tests/web/vistas-iguales.mjs` pinta el `dashboard.html` del último commit y el nuevo sobre los mismos datos, y el HTML de Panel, Progreso, Análisis, Diario y Ejercicios es idéntico. Lo único distinto a propósito es el pie del Panel, que ahora dice «teclas 1–6».
   - **`/gymhub:semana` en una sesión interactiva real** (tmux) con la web abierta en Chromium: las 3 preguntas llegaron de una en una (la tercera, con opciones sacadas de los datos), el fichero salió con el formato exacto y la página pasó del recordatorio al repaso sin recargar y sin errores.
   - **Capturas con Playwright** en claro y en oscuro (`tests/web/capturas.mjs` → `docs/capturas/semana*.png`), sin errores en la consola.
+
+### 14.1 Carpetas con datos de antes de la pestaña Semana
+
+- **Los datos valen tal cual:** la pestaña sale de `sesiones/*.md` y `datos.json` se recalcula siempre. Los repasos del formato de la Fase 7 se leen como acciones `→`.
+- **Hueco 1, corregido:** la página `dashboard.html` de la carpeta solo se copiaba con `configurar`, `carpeta` o un comando de vista. Ahora `publicar` comprueba siempre que es la del plugin, así que cualquier `/refresh` o `/semana` la pone al día.
+- **Hueco 2, corregido:** un `/refresh` sin nada nuevo publicaba el `datos.json` viejo sin recalcularlo, y la pestaña nueva habría salido vacía. Ahora recalcula. Lo cubre un test.
+- **La página se recarga sola cuando se actualiza:**
+  - el plugin copia la página con su versión dentro (el hash de su plantilla), y `datos.js` trae la versión del plugin (`version_web`), que entra en el hash de los datos para que `version.js` cambie;
+  - si no coinciden, la página abierta se recarga una vez por versión, conservando el `#ancla` (lo comprueba `pnpm test:web` en Chromium y Firefox).
+  - Una pestaña abierta con una versión **anterior** a esta no lleva esa lógica: hay que recargarla a mano una vez.
+- **Comprobado con el caso real simulado:** una carpeta creada e importada con el commit `52a30c6` (sin la pestaña), con un repaso en formato viejo. Con el plugin nuevo, un solo `/refresh` sin nada nuevo deja la página con la pestaña Semana y `datos.semana` calculado.
