@@ -220,3 +220,20 @@ gymhub/
 - **Tests:** `node --test` con la lista explícita de ficheros (`scripts/test.mjs`), porque Node 20 no admite globs. `pnpm lint` = `scripts/comprobar-web.mjs` (la web no puede hacer peticiones de red y solo carga `datos.js` y `version.js`) + `claude plugin validate .`.
 - **`docs/FORMATO.md` no está versionado** (decisión tuya). En este repo funciona, pero un plugin instalado desde GitHub no lo tendría: `formato` lo avisa y la skill normalizaría solo con su resumen. Hay que versionarlo antes de publicar.
 - **Prueba real:** `/gymhub:configurar <tmp>/GIMNASIO` y `/gymhub:carpeta` (mostrar y cambiar), en sesiones `claude -p` con la config aislada. Sin nadie a quien preguntar, se salta los objetivos. Ante una carpeta sin estructura, no la cambia y lo dice.
+
+## 6. Decisiones de la Fase 2
+
+- **Parser propio** (`lib/canonico.mjs`), sin dependencias: un YAML mínimo para el frontmatter (escalares, comentarios `# …`, comillas, `null` y la lista de `molestias`) y tablas Markdown leídas por el nombre de la columna. Nunca lanza: los problemas que impiden calcular van a `errores`, y la sesión se aparta del cálculo y se informa; los demás van a `avisos`. Escribir y volver a leer una sesión da lo mismo (lo comprueba un test).
+- **Cifras por serie** (`lib/series.mjs`):
+  - **e1RM:** Epley, de 1 a 10 repeticiones, solo en series de trabajo; con 1 repetición es el propio peso.
+  - **lb:** se pasa a kg con 0,4536.
+  - **`/lado` y `/mano`:** cuentan doble en el volumen. El e1RM es el de la carga escrita (por mano o por lado), para que la progresión sea comparable.
+  - **`8/8` (por lado):** el volumen suma los dos lados y el e1RM usa el menor.
+  - **`PC±n`:** usa el peso corporal de la sesión, el último anotado o el de FICHA.md. Sin ninguno, no hay kg y el ejercicio progresa en su escala de «lastre».
+  - **`nivel n`:** solo tiene kg con una línea de `convenciones.md` como `- equivalencia jalón al pecho: nivel 1 = 5 kg, +5 kg por nivel`.
+- **Escala de cada ejercicio:** la más frecuente en sus series de trabajo: kg (con e1RM), lastre, nivel, tiempo o repeticiones. Los récords, los PRs y las gráficas de ese ejercicio usan esa escala.
+- **PR:** una sesión supera el mejor valor anterior de su ejercicio y el ejercicio ya tiene al menos dos sesiones previas. Así las primeras sesiones de un ejercicio no se cuentan como PR.
+- **Racha:** cuenta los días de entreno seguidos. Se rompe cuando hay `racha_umbral_dias` (4) días o más sin entrenar entre dos sesiones, o desde la última hasta hoy (sin contar hoy). Los días de una pausa declarada no cuentan como días sin entrenar.
+- **`eventos.md`**, fichero nuevo en la carpeta de datos, para lo que no es una sesión: pausas, cambios de programa e hitos (FORMATO §3.8). Ejemplo: `- 2024-08-01 → 2024-08-15 · pausa · vacaciones`. Es fuente de verdad, así que no puede vivir en `.gymhub/`.
+- **records.md** se rehace entero salvo «Marcas declaradas». **FICHA.md** solo se toca en su sección «Estado actual». Las dos cosas pasan solo al cerrar un `/gymhub:refresh` (o con `derivar --md`), nunca al publicar.
+- **Caché:** `.gymhub/cache-sesiones.json` guarda cada sesión ya leída junto con su `mtime` y su tamaño. Así no se vuelven a leer cientos de ficheros en `/mnt/d` cada vez.
