@@ -60,6 +60,50 @@ for (const [nombre, lanzar] of NAVEGADORES) {
     await page.keyboard.press("1");
     assert.equal(await vistaActiva(page), "panel", "Esc quita el foco y las teclas vuelven a cambiar de vista");
   });
+  await paso("Análisis: radar con conmutador fuerza/volumen en el #ancla", async () => {
+    await page.keyboard.press("3");
+    await page.waitForSelector("#a-radar svg polygon");
+    await page.click("[data-modo=volumen]");
+    assert.match(page.url(), /#analisis\?modo=volumen$/);
+    assert.match(await page.textContent("#a-radar"), /Menos volumen/);
+    assert.ok((await page.$$("#a-rat .bar")).length === 3);
+    await page.keyboard.press("1");
+  });
+  await paso("Diario: chips, buscador, desplegar una sesión y filtro pedido por /gymhub:diario", async () => {
+    await page.keyboard.press("4");
+    await page.waitForSelector("#d-tl .ent");
+    const total = (await page.$$("#d-tl .ent")).length;
+    await page.click("[data-chip='Con PR']");
+    const conPR = await page.$$eval("#d-tl .ent", (x) => x.map((e) => e.textContent));
+    assert.ok(conPR.length > 0 && conPR.length <= total && conPR.every((t) => t.includes("PR")));
+    await page.click("[data-chip=Todo]");
+    await page.fill("#d-q", "hip thrust");
+    await page.waitForFunction(() => [...document.querySelectorAll("#d-tl .ent")].every((e) => /hip thrust/i.test(e.textContent)));
+    await page.click("#d-tl .ent");
+    assert.ok(await page.isVisible("#d-tl .ent.open .det"));
+    await page.keyboard.press("Escape");
+    ponerNavegar(carpeta, "diario", { filtro: "rodilla" }); publicar(carpeta);
+    await page.waitForFunction(() => document.querySelector("[data-chip].on")?.dataset.chip === "rodilla", null, { timeout: 2500 });
+    await page.keyboard.press("1");
+  });
+  await paso("Ejercicios: elegir de la lista, rangos 6M/1A/Todo y enlace al Diario", async () => {
+    await page.keyboard.press("5");
+    await page.waitForSelector("#e-lista .it");
+    await page.click("#e-lista .it[data-id=press-banca]");
+    assert.match(page.url(), /#ejercicios\/press-banca$/);
+    assert.match(await page.textContent("#e-cab"), /Press banca/);
+    const n1A = (await page.$$("#e-graf circle[data-tt]")).length;
+    await page.click("[data-r=Todo]");
+    const nTodo = (await page.$$("#e-graf circle[data-tt]")).length;
+    assert.ok(nTodo > n1A, `Todo (${nTodo}) muestra más sesiones que 1A (${n1A})`);
+    await page.fill("#e-q", "sentad");
+    assert.ok((await page.$$eval("#e-lista .it", (x) => x.map((e) => e.dataset.id))).every((id) => id.includes("sentadilla")));
+    await page.keyboard.press("Escape");
+    await page.click("#e-ult [data-diario]");
+    assert.equal(await vistaActiva(page), "diario");
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("1");
+  });
   await paso("#ancla al abrir", async () => {
     const p2 = await ctx.newPage(); await p2.goto(url + "#analisis?modo=volumen");
     assert.equal(await vistaActiva(p2), "analisis"); await p2.close();

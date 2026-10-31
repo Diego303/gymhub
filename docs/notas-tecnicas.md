@@ -324,3 +324,28 @@ En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.m
   - capturas en claro, en oscuro y a 560 px frente a `docs/maquetas/progreso.html`;
   - `pnpm test:web`, que escribe pesos en la calculadora y comprueba los discos, el aviso de «no sale exacto» y el de fuera de rango, y los tooltips del mapa;
   - tests de las cifras (`tests/progreso.test.mjs`).
+
+## 10. Decisiones de la Fase 6 (Análisis, Diario y Ejercicios)
+
+- **`lib/analisis.mjs`**, con la tabla del plan. Cada métrica devuelve `n/d` con su motivo cuando faltan datos.
+  - **Radar de fuerza:** el ejercicio de referencia de cada patrón es el principal del catálogo; si la persona no hace ninguno, su ejercicio más frecuente del patrón en kg (también para banca:remo). Las dominadas lastradas entran con el peso corporal. Un patrón sin datos sale `n/d` en su eje.
+  - **Hace 3 meses:** el mismo cálculo con la ventana que termina hace 12 semanas.
+  - **Disposición:** sueño de la sesión de hoy o de ayer (40 %), RPE de 7 días como (10 − RPE) × 25 (30 %), y la última sensación pre de 7 días (30 %). La página dice qué componentes entraron.
+  - **Predicción:** mínimos cuadrados sobre el mejor e1RM de cada semana (al menos 6 semanas). El punto de partida es el mayor entre la recta hoy y la mejor de las 2 últimas semanas. Además de estancado y «> 1 año», «conseguido» si ya se ha llegado.
+  - **Estancados:** escala kg, al menos 4 sesiones, entrenado en las últimas 4 semanas y sin superar su mejor e1RM desde hace 4 semanas o más.
+  - **Lo que dicen tus datos:** el e1RM relativo de cada ejercicio frente a la media de sus 5 sesiones anteriores (desde la 4.ª), promediado por sesión, comparado entre grupos (sueño, franja horaria, días de descanso). Con n ≥ 30 y ≥ 10 por grupo, como mucho dos hallazgos y siempre con su n.
+- **`lib/diario.mjs`:**
+  - **Molestias:** una fila por zona y lado, 12 celdas con el peor estado de la semana; una semana sin menciones queda vacía, no «bien».
+  - **Aviso de repetición:** las últimas menciones seguidas de la zona con molestia o dolor, 3 o más, la última en las 4 semanas anteriores.
+  - **Hitos:** inicio o cambio de programa, primera vez de un ejercicio (salvo en la primera sesión del historial), pausas e hitos de `eventos.md`.
+  - **En la web:** la línea de tiempo enseña 40 entradas y «ver más». `/gymhub:diario <zona|ejercicio>` aplica el chip de la zona o, si no es una zona, lo busca como texto.
+- **`lib/ejercicio.mjs`:** la ficha de cada ejercicio con 3 sesiones o más. Los ejes de cada rango (6M, 1A, Todo) vienen calculados; la página solo filtra los puntos por fecha. Para los ejercicios sin e1RM (nivel, lastre sin peso corporal, tiempo, carga a más de 10 repeticiones), el gráfico usa su escala.
+  - **Mejor marca:** la carga más alta.
+  - **Variación de 12 meses:** el mejor de las últimas 8 semanas frente al de ±4 semanas de hace un año.
+  - **Frecuencia:** sesiones de los últimos 12 meses ÷ 12.
+  - **En tus notas:** frases que nombran el ejercicio por su nombre, su id o un alias de 4 letras o más.
+- **Decimales con coma** en todo lo que se muestra (`decimalEs`). El formato estándar sigue guardando el punto.
+- **Persona sintética de 2 años con cifras verificadas a mano** (`tests/fixtures/dosanios.mjs` + `tests/analisis.test.mjs`): progresiones lineales conocidas y ejercicios estancados a propósito. Las cuentas van en los comentarios del test: radar de fuerza y volumen, los tres ratios, A:C = 9081,25 ÷ (36212,5 ÷ 4) = 1,00, predicciones con su fecha (por ejemplo, sentadilla a 0,58 kg/sem → 13 may 2027), estancados de 103 semanas, disposición de 60, adherencia del 100 % y la ficha de press banca (+27,4 % en 12 meses, 4,3 al mes). Hacerlas a mano destapó tres errores **en mis cuentas**, no en el código. También hay casos `n/d` con solo 4 sesiones.
+- **Comprobado:**
+  - capturas de las tres vistas frente a sus maquetas (en claro, en oscuro y a 560 px);
+  - `pnpm test:web` en Chromium y Firefox: conmutador fuerza/volumen en el `#ancla`, chips y buscador del Diario, desplegar una sesión, filtro pedido por un comando, elegir ejercicio, rangos y el enlace de una fecha al Diario.

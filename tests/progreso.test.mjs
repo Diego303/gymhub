@@ -76,5 +76,5 @@ test("un ejercicio a más de 10 repeticiones progresa por carga (sin e1RM falso)
   const r = c.records.find((x) => x.id === "face-pull");
   assert.equal(r.escala, "carga");
   assert.equal(r.texto_valor, "27,5 kg");
-  assert.equal(r.serie, "27.5 kg × 12");
+  assert.equal(r.serie, "27,5 kg × 12");
 });
