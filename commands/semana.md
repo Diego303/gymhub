@@ -1,13 +1,37 @@
 ---
-description: Resumen de tu semana (volumen, PRs, sensaciones, molestias) en semanas/AAAA-Www.md, con lo que conviene ajustar
-argument-hint: "[AAAA-Www | anterior]"
-allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/gymhub.mjs":*)
+description: Repaso de tu semana. gymhub calcula los datos, Claude te hace 3 preguntas y lo guarda en semanas/AAAA-Www.md (lo ves en la pestaña Semana de la web)
+argument-hint: "[AAAA-Www]"
+allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/bin/gymhub.mjs":*), AskUserQuestion
 ---
-Vas a escribir el resumen semanal de la persona. Las cifras ya están calculadas por el script: **cópialas tal cual, sin cambiar ni añadir ninguna**. Tú solo redactas «Qué ajustar».
+Vas a hacer con la persona el repaso de su semana. Habla en español, con frases cortas y cercanas. **Las cifras las calcula el script: no estimes ni calcules ninguna.**
 
-Argumento: «$ARGUMENTS» (una semana `2026-W44`, `anterior`, o nada para la actual).
+Semana pedida: «$ARGUMENTS» (una semana `2026-W44` o nada para la actual).
 
-1. Ejecuta `node "${CLAUDE_PLUGIN_ROOT}/bin/gymhub.mjs" semana <argumento>`. La primera línea dice el fichero (`semanas/AAAA-Www.md`) y después viene el borrador.
-2. Debajo de «## Qué ajustar» escribe de 2 a 4 viñetas, cortas y concretas, a partir de esas cifras: grupos que van cortos, constancia, descarga, estancados, sueño… Si hay molestias, como mucho «valora consultarlo»; nunca diagnostiques. Quita el comentario `<!-- … -->`.
-3. Guárdalo con `node "${CLAUDE_PLUGIN_ROOT}/bin/gymhub.mjs" escribir semanas/AAAA-Www.md <<'GYMHUB_FIN' … GYMHUB_FIN`.
-4. En el chat, responde en 3 a 5 líneas: lo esencial de la semana y tus ajustes. Di dónde está el fichero.
+1. **Datos.** Ejecuta `node "${CLAUDE_PLUGIN_ROOT}/bin/gymhub.mjs" semana`, añadiendo la semana si se ha pedido una. Te da la semana (`AAAA-Www`), sus cifras y unos «hechos» ya redactados, cada uno con su marcador.
+2. **Tres preguntas, de una en una.** Cada pregunta es una llamada distinta a AskUserQuestion, en este orden y con este texto exacto. Espera la respuesta antes de pasar a la siguiente.
+   1. «¿Cómo te has sentido?». Opciones: «Con energía», «Normal», «Cansado».
+   2. «¿Molestias?». Opciones: «Ninguna» y, si los datos traen molestias, una con esa zona (por ejemplo «Sí, hombro izq.»).
+   3. «¿Qué priorizas la semana que viene?». Dos o tres opciones sacadas de los datos (un grupo que va corto, llegar a las sesiones del objetivo, una descarga sugerida…).
+
+   La persona puede escribir su propia respuesta. Guárdala tal cual, en una frase. Si no puedes preguntar (sesión sin nadie), pon «(sin respuesta)».
+3. **El repaso.** Como mucho 5 líneas, cada una con un marcador: `✓` bien, `★` PR, `▲` aviso, `!` molestia, `→` acción.
+   - Todo apoyado en los datos: usa los «hechos» (puedes acortarlos o juntarlos), no añadas cifras nuevas.
+   - La última línea es una `→` con lo que conviene la semana que viene, según la tercera respuesta y los datos.
+   - Molestias: solo se registran. Si los datos dicen que se repite, «valora consultarlo». Nunca diagnostiques ni des consejo médico.
+4. **Guárdalo** con el formato fijo (el script valida y añade la cabecera):
+
+   ```
+   node "${CLAUDE_PLUGIN_ROOT}/bin/gymhub.mjs" semana guardar AAAA-Www <<'GYMHUB_FIN'
+   ## Repaso
+   - ✓ …
+   - → …
+
+   ## Preguntas
+   - ¿Cómo te has sentido?: …
+   - ¿Molestias?: …
+   - ¿Qué priorizas la semana que viene?: …
+   GYMHUB_FIN
+   ```
+
+   Si responde «NO SE HA GUARDADO NADA», corrige lo que dice y reenvía.
+5. **En el chat**, 2 o 3 líneas: lo esencial de la semana y la acción. Recuerda que el repaso ya está en la pestaña Semana de la web (tecla `6`).

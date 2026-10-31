@@ -393,3 +393,40 @@ En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.m
 - Las fechas del frontmatter se escriben sin comillas, como en FORMATO.md.
 - **La carpeta de la sesión manda:** si Claude Code se abre en una carpeta de gymhub (lo normal con la instalación de proyecto), los comandos usan esa carpeta, aunque la config apunte a otra. La config se usa al abrir Claude Code en otro sitio. Antes, tener dos carpetas (por ejemplo, una de prueba y la real) hacía que los comandos de una actuaran sobre la última configurada. Lo cubre un test.
 - **`instrucciones.md` completada** con los casos de carpeta nueva o existente, rutas con espacios o de Windows, permisos, una importación grande que se corta (se reanuda), mover la carpeta y tener varias.
+
+## 14. Pestaña Semana (2026-10-31)
+
+- **Datos** (`lib/semanas.mjs` → `datos.semana`): una entrada por semana, de la primera con sesiones a la de hoy, con el inicio de semana de la config.
+  - **Contenido de cada semana:**
+    - las cifras: sesiones, toneladas, series de trabajo, intensidad, PRs, series por grupo (los 6 de la maqueta: pecho, espalda, pierna, hombro, brazos y core, agregados como en FICHA.md), sueño medio y molestias;
+    - el estado y la racha;
+    - el resumen del mes;
+    - el repaso.
+  - **Clave y mes:** la semana se identifica por la semana ISO de su jueves (`2026-W44`), y el mes de una semana es el de su jueves.
+  - **Intensidad:** se calcula igual que la del bloque de Progreso; ahora las dos usan la misma función (`intensidadEntre`), y Progreso no cambia (lo comprueban sus tests).
+  - **La clave `semanas` antigua** de `datos.json` (las últimas 52, que no usaba nadie) se sustituye por este agregado.
+- **Comparaciones:** se comparan con la semana anterior, salvo si fue de pausa (entonces «—»), y con la media de las 4 semanas de calendario previas sin las de pausa, como en la maqueta. Los porcentajes son relativos (también los de la intensidad) y vienen calculados.
+- **Pausas** (`eventos.md`):
+  - una semana con 4 días de pausa o más es «de pausa»: no cuenta en las medias, ni como semana anterior, ni para la racha, ni en el mes;
+  - con 1 a 3 días de pausa, el objetivo se reduce en proporción: `round(días_semana × (7 − días de pausa) / 7)`.
+- **Estado de la semana:**
+  - **cumplida:** sesiones ≥ objetivo;
+  - **a 1 sesión:** una por debajo del objetivo;
+  - **fallada:** dos o más por debajo;
+  - **pausa;**
+  - **en curso:** la semana de hoy mientras no llega al objetivo. Ni rompe la racha ni cuenta en el «semanas cumplidas» del mes hasta que termina.
+- **Resumen del mes:** las semanas del mes hasta la elegida, frente al mes anterior completo. El título dice «(en curso)» o «(hasta la sem N)» si al mes le quedan semanas.
+- **Semana por defecto:** la actual si ya tiene alguna sesión; si no, la anterior.
+- **El repaso** (`semanas/AAAA-Www.md`): el formato fijo del encargo. **Lo interpreta el script, no la web:** la página lo recibe ya leído en `datos.js`, como el resto de datos, así que se prueba con `node --test` y la página sigue sin calcular nada.
+  - `semana guardar AAAA-Www` valida antes de escribir: de 1 a 5 líneas con los marcadores `✓ ★ ▲ ! →`, y las 3 preguntas con su texto exacto y con respuesta.
+  - Añade la cabecera (`semana`, `generado`), guarda copia del anterior y lleva la web abierta a esa semana.
+  - Los ficheros del formato de la Fase 7 (`## Qué ajustar`) se siguen leyendo: sus viñetas salen como acciones `→`.
+- **`/gymhub:semana`:** por defecto, la semana actual. El script da las cifras y unos «hechos» ya redactados, cada uno con su marcador y sacados de los datos. Las molestias se registran y, si se repiten con la regla del Diario, «valora consultarlo». Claude hace las 3 preguntas de una en una (una llamada a AskUserQuestion por pregunta), redacta como mucho 5 líneas apoyadas en esos hechos y lo guarda con `semana guardar`.
+- **`/gymhub:refresh` en sábado o domingo:** si la semana de hoy tiene sesiones y no tiene repaso, el cierre (o el «nada nuevo») trae la línea «¿Hacemos el repaso de la semana? → /gymhub:semana», y el comando la repite al final.
+- **Prefijo:** en la web y en los textos sale `/gymhub:semana`, no `/semana`, porque los comandos del plugin llevan prefijo (§2.3).
+- **Comprobado:**
+  - **Persona sintética de 6 meses** (`tests/fixtures/seismeses.mjs` + `tests/semanas.test.mjs`): KPIs y comparaciones de la W44, la semana después de una pausa, estados y racha (6 seguidas con la pausa de por medio), series por grupo con aviso, resumen de octubre frente a septiembre y molestias que se repiten. Todo calculado a mano en los comentarios; los 11 tests pasaron a la primera.
+  - **`pnpm test:web`** (Chromium y Firefox): tecla `6`, `#semana/AAAA-Www`, flechas, «volver a esta semana» y clic en la tira. Recorrer 25 semanas con las flechas tarda 41 ms en Chromium y 75 ms en Firefox (la más lenta, 3 y 6 ms). El repaso aparece sin recargar unos 2 s después de lanzar `semana guardar` (que recalcula todo). Ningún error en la consola en las 6 vistas.
+  - **Las 5 vistas anteriores, iguales:** `tests/web/vistas-iguales.mjs` pinta el `dashboard.html` del último commit y el nuevo sobre los mismos datos, y el HTML de Panel, Progreso, Análisis, Diario y Ejercicios es idéntico. Lo único distinto a propósito es el pie del Panel, que ahora dice «teclas 1–6».
+  - **`/gymhub:semana` en una sesión interactiva real** (tmux) con la web abierta en Chromium: las 3 preguntas llegaron de una en una (la tercera, con opciones sacadas de los datos), el fichero salió con el formato exacto y la página pasó del recordatorio al repaso sin recargar y sin errores.
+  - **Capturas con Playwright** en claro y en oscuro (`tests/web/capturas.mjs` → `docs/capturas/semana*.png`), sin errores en la consola.

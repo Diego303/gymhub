@@ -4,7 +4,7 @@ import { cpSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { temporal, cli, RAIZ } from "./ayuda.mjs";
 import { contexto } from "../lib/derivar.mjs";
-import { semanaPedida, resumenSemana, textoSemana, buscarEjercicio, dudasPendientes } from "../lib/seguimiento.mjs";
+import { semanaPedida, buscarEjercicio, dudasPendientes } from "../lib/seguimiento.mjs";
 import { calentamiento, empezarEntreno, apuntarSerie, terminarEntreno } from "../lib/vivo.mjs";
 import { construirPanel } from "../lib/panel.mjs";
 import { preparar } from "../lib/refresh.mjs";
@@ -22,22 +22,11 @@ before(() => {
 after(() => { t.limpiar(); for (const k of Object.keys(env)) delete process.env[k]; });
 const c = () => contexto(carpeta, { hoy: "2026-10-31" });
 
-test("semana: la pedida, la anterior y su borrador con las cifras del script", () => {
+test("semana: la pedida (por defecto, la actual) y la anterior", () => {
   assert.equal(semanaPedida(c(), undefined), "2026-10-26");
   assert.equal(semanaPedida(c(), "anterior"), "2026-10-19");
   assert.equal(semanaPedida(c(), "2026-W43"), "2026-10-19");
-  const r = resumenSemana(c(), "2026-10-26");
-  assert.equal(r.clave, "2026-W44");
-  const txt = textoSemana(c(), r);
-  assert.match(txt, /^# Semana 2026-W44 \(26 oct – 1 nov\)/);
-  assert.match(txt, /- Sesiones: 3 de 4 · lun Torso pesado · mié Pierna y tirón · vie Banca/);
-  assert.match(txt, /- Series de trabajo: 13 · volumen 4,7 t \(\+1143 % frente a la semana anterior\)/);
-  assert.match(txt, /- PRs: press banca 85 kg × 5 \(30 oct\)/);
-  assert.match(txt, /RPE medio 8,2 · sueño medio 6h 45m/);
-  assert.match(txt, /- Molestias: hombro izq\. \(molestia → bien\)/);
-  assert.match(txt, /## Qué ajustar/);
-  const out = cli(t.dir, ["semana"], { env });
-  assert.match(out.salida, /^FICHERO: semanas\/2026-W44\.md/);
+  assert.equal(semanaPedida(c(), "2026W43"), "2026-10-19");
 });
 
 test("ejercicio: por alias, sin historial o con candidatos; deja el Panel y la web en ese ejercicio", () => {

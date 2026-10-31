@@ -104,6 +104,25 @@ table{width:100%;border-collapse:collapse;font-size:11.5px}
 td,th{padding:4px 6px;text-align:left;border-top:.5px solid var(--border)}
 th{font-weight:400;color:var(--text-secondary);border-top:none}
 a{color:inherit;text-decoration-color:var(--border-strong)}
+.r-cinco{grid-template-columns:repeat(5,minmax(0,1fr))}
+.up{color:var(--text-success)}.dn{color:var(--text-warning)}
+.pildora{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--marca);color:#fff}
+.linea-rev{display:grid;grid-template-columns:16px 1fr;gap:6px;padding:3px 0}
+.recordatorio{color:var(--text-secondary);font-size:11.5px;padding:6px 0}
+.recordatorio b{color:var(--text-primary);font-weight:500}
+.barra-g{height:6px;border-radius:3px;background:var(--surface-1);margin-top:2px}
+.barra-g>div{height:6px;border-radius:3px}
+.barra-g.media{height:4px;margin-top:1px}.barra-g.media>div{height:4px;border-radius:2px;background:var(--marca-3)}
+.tira{display:grid;grid-template-columns:repeat(13,16px);gap:3px;margin:10px 0 6px}
+.cel-sem{width:16px;height:16px;border-radius:3px;padding:0;border:none;cursor:pointer}
+.cel-sem.pausa{border:.5px dashed var(--border-stronger)}
+.cel-sem.sel{outline:2px solid var(--text-primary);outline-offset:1px}
+.cel-sem.despues{opacity:.35}
+.qa{border-top:.5px solid var(--border);padding:6px 0;font-size:11.5px}
+.mini-mes{background:var(--surface-1);border-radius:6px;padding:5px 8px}
+.barras-mes{display:flex;align-items:flex-end;gap:5px;height:44px;margin-top:10px}
+.barras-mes>div{flex:1;border-radius:3px 3px 0 0}
+button:disabled{opacity:.4;cursor:default}
 .vista{display:none}.vista.on{display:block}
 .proximamente{padding:24px;text-align:center}
 @media (max-width:700px){
@@ -111,6 +130,7 @@ a{color:inherit;text-decoration-color:var(--border-strong)}
   .grupos2{grid-template-columns:1fr}
   body{padding:10px}
   .r-panel-1,.r-dos,.r-dos-igual,.r-dos-b,.r-dos-a,.r-dos-c,.r-tres,.r-ej{grid-template-columns:minmax(0,1fr)}
+  .r-cinco{grid-template-columns:repeat(2,minmax(0,1fr))}
   .r-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .span4{grid-column:span 2}
   .cal{grid-auto-columns:minmax(8px,1fr)}
@@ -128,6 +148,7 @@ a{color:inherit;text-decoration-color:var(--border-strong)}
     <section class="vista" id="v-analisis" data-vista="analisis"></section>
     <section class="vista" id="v-diario" data-vista="diario"></section>
     <section class="vista" id="v-ejercicios" data-vista="ejercicios"></section>
+    <section class="vista" id="v-semana" data-vista="semana"></section>
   </div>
 </div>
 <div class="tt" id="tt"></div>
@@ -140,7 +161,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const fmt = (x, dec = 1) => { if (x === null || x === undefined || !isFinite(x)) return "—"; const r = Math.round(x * 10 ** dec) / 10 ** dec; const [e, f] = Math.abs(r).toFixed(dec).split("."); const m = e.replace(/\B(?=(\d{3})+(?!\d))/g, "."); const fr = f && Number(f) ? "," + f.replace(/0+$/, "") : ""; return (r < 0 ? "−" : "") + m + fr; };
 const DEPURAR = /depurar/.test(location.search);
 const log = (m) => { if (DEPURAR) console.log("GYMHUB-WEB " + m); };
-const VISTAS = [["panel", "Panel"], ["progreso", "Progreso"], ["analisis", "Análisis"], ["diario", "Diario"], ["ejercicios", "Ejercicios"]];
+const VISTAS = [["panel", "Panel"], ["progreso", "Progreso"], ["analisis", "Análisis"], ["diario", "Diario"], ["ejercicios", "Ejercicios"], ["semana", "Semana"]];
 const MARCA = "#D85A30", MARCA2 = "#F0997B", MARCA3 = "#F5C4B3", MARCA4 = "#993C1D", VERDE = "#1D9E75", AZUL = "#378ADD", AMBAR = "#BA7517";
 const HINT = "deja tus entrenos en CONTEXTO/ y usa /gymhub:refresh";
 const hace = (iso) => { if (!iso) return null; const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000); if (s < 90) return "hace un momento"; const m = s / 60; if (m < 60) return `hace ${Math.round(m)} min`; const h = m / 60; if (h < 36) return `hace ${Math.round(h)} h`; return `hace ${Math.round(h / 24)} d`; };
@@ -246,7 +267,7 @@ function alRecibir() {
     navAplicada = nav.id; sessionStorage.setItem("gymhub-nav", String(nav.id));
     if (reciente && !primeraConAncla) {
       const p = {};
-      if (nav.filtro) p[nav.vista === "ejercicios" ? "id" : nav.vista === "diario" ? "f" : "filtro"] = nav.filtro;
+      if (nav.filtro) p[nav.vista === "ejercicios" || nav.vista === "semana" ? "id" : nav.vista === "diario" ? "f" : "filtro"] = nav.filtro;
       if (nav.modo) p.modo = nav.modo;
       if (nav.kg) p.kg = nav.kg;
       irA(nav.vista, p);
@@ -396,11 +417,11 @@ function pintarPanel() {
     <div class="peq" style="line-height:1.8">RPE medio <span style="font-weight:500">${sen && sen.rpe !== null ? fmt(sen.rpe) : "—"}</span> <span style="color:${AMBAR}">${"█".repeat(Math.round((sen && sen.rpe_pct || 0) / 10))}</span><span class="mut">${"░".repeat(10 - Math.round((sen && sen.rpe_pct || 0) / 10))}</span><br>
     Sueño medio <span style="font-weight:500">${esc(sen && sen.sueno || "—")}</span>${sen && sen.molestias && sen.molestias.length ? "<br>" + sen.molestias.map((m) => `${esc(m.zona)} ${m.estado === "bien" ? "bien" : `<span style="color:var(--text-warning)">▲</span>`}`).join(" · ") : ""}
     ${d ? `<br><span style="color:var(--text-warning)">▲</span> <span data-tt="${esc(d.motivo)} · es solo una sugerencia">${esc(d.texto)}</span>` : ""}</div>`);
-  bloque("p-pie", { r: P.rutina }, () => `<span>/gymhub:refresh · /gymhub:ejercicio &lt;nombre&gt; · /gymhub:semana · /gymhub:discos &lt;kg&gt;</span><span class="mut">teclas 1–5 para cambiar de vista</span>`);
+  bloque("p-pie", { r: P.rutina }, () => `<span>/gymhub:refresh · /gymhub:ejercicio &lt;nombre&gt; · /gymhub:semana · /gymhub:discos &lt;kg&gt;</span><span class="mut">teclas 1–6 para cambiar de vista</span>`);
 }
 
 // Las demás vistas se añaden aquí (Fases 5 y 6).
-window.gymhub = { bloque, esc, fmt, barra, HINT, MARCA, MARCA2, MARCA3, MARCA4, VERDE, AZUL, AMBAR, NIV, get D() { return D; }, get sub() { return sub; }, irA, rexSVG };
+window.gymhub = { bloque, esc, fmt, barra, HINT, MARCA, MARCA2, MARCA3, MARCA4, VERDE, AZUL, AMBAR, NIV, get D() { return D; }, get sub() { return sub; }, get vista() { return vista; }, irA, rexSVG };
 
 // ── Arranque (diferido: así los scripts de las vistas, más abajo, ya se han registrado) ──
 setTimeout(() => {
@@ -674,6 +695,80 @@ function grafico(F) {
     <svg width="100%" height="190" viewBox="0 0 600 190" preserveAspectRatio="none" role="img"><title>Progresión de ${esc(F.nombre)}</title>${g}</svg>
     <div class="mut peq" style="display:flex;gap:14px;flex-wrap:wrap"><span><span style="color:${G.MARCA2}">●</span> sesión</span><span><span style="color:${G.MARCA}">━</span> mejor del mes</span><span><span style="color:${G.AMBAR}">★</span> PR</span>${F.objetivo && F.escala === "kg" ? "<span>┄ objetivo</span>" : ""}${pts.length ? "" : '<span>sin sesiones en este rango</span>'}</div>`;
 }
+})();
+</script>
+<script>
+// ── Vista Semana: la revisión del fin de semana (todo viene calculado en datos.semana) ──
+(() => {
+const G = window.gymhub, { bloque, esc, fmt } = G;
+const MARCA_COLOR = { "✓": "var(--text-success)", "★": "#BA7517", "▲": "var(--text-warning)", "!": "var(--text-danger)", "→": G.MARCA, "◇": "var(--text-secondary)" };
+const ESTADO = { cumplida: ["#1D9E75", "cumplida"], a1: ["#FAC775", "a 1 sesión"], fallada: ["#E24B4A", "no cumplida"], pausa: ["transparent", "pausa"], en_curso: ["var(--cal-0)", "en curso"] };
+const datosSemana = () => (G.D && G.D.semana) || {};
+/** Semana elegida: la del #ancla (#semana/2026-W44) o la de por defecto. */
+function indice(S) {
+  const id = String(G.sub.id || "").toUpperCase();
+  let i = id ? S.semanas.findIndex((w) => w.clave === id) : -1;
+  if (i < 0) i = S.semanas.findIndex((w) => w.clave === S.defecto);
+  return i < 0 ? S.semanas.length - 1 : i;
+}
+function ir(i) {
+  const S = datosSemana();
+  if (!S.semanas || i < 0 || i >= S.semanas.length) return;
+  G.irA("semana", { id: S.semanas[i].clave });
+}
+const delta = (d, tt) => (d === null || d === undefined ? `<span class="mut">—</span>` : `<span class="${d >= 0 ? "up" : "dn"}"${tt ? ` data-tt="${esc(tt)}"` : ""}>${d >= 0 ? "▲" : "▼"} ${Math.abs(d)}%</span>`);
+window.pintar_semana = () => {
+  const S = datosSemana();
+  const cont = document.getElementById("v-semana");
+  if (S.error) { cont.innerHTML = `<div class="box mut">Error al calcular esta vista: ${esc(S.error)}</div>`; delete cont.dataset.armado; return; }
+  if (!S.semanas || !S.semanas.length) { cont.innerHTML = `<div class="box proximamente mut">Aquí verás el repaso de cada semana. ${G.HINT}</div>`; delete cont.dataset.armado; return; }
+  if (!cont.dataset.armado) {
+    cont.dataset.armado = "1";
+    cont.innerHTML = `<div id="s-cab"></div><div class="rejilla r-cinco" id="s-kpis"></div>
+      <div class="rejilla r-dos mt8"><div class="box" id="s-rev"></div><div class="box" id="s-grp"></div></div>
+      <div class="rejilla r-tres mt8"><div class="box" id="s-cump"></div><div class="box" id="s-qa"></div><div class="box" id="s-mes"></div></div>`;
+    cont.addEventListener("click", (e) => { const b = e.target.closest("[data-ir]"); if (b && !b.disabled) ir(Number(b.dataset.ir)); });
+  }
+  const i = indice(S), w = S.semanas[i], ultima = S.semanas.length - 1;
+  bloque("s-cab", { i, c: w.clave, t: w.titulo, r: w.rango, a: w.clave === S.actual, n: ultima }, (x) => `<div class="fila" style="align-items:center;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:8px"><button data-ir="${x.i - 1}" ${x.i === 0 ? "disabled" : ""} aria-label="Semana anterior">←</button>
+      <div><div style="font-size:16px;font-weight:500">${esc(x.t)}</div><div class="mut peq">${esc(x.r)}</div></div>
+      <button data-ir="${x.i + 1}" ${x.i === x.n ? "disabled" : ""} aria-label="Semana siguiente">→</button></div>
+    ${x.a ? `<span class="pildora">esta semana</span>` : `<button data-ir="${x.n}">volver a esta semana</button>`}</div>`);
+  bloque("s-kpis", { k: w.kpis, p: w.pausa, o: w.objetivo }, ({ k, p, o }) => [
+    ["Sesiones", k.sesiones, (v) => fmt(v, 0), o ? `/${o}` : ""], ["Volumen", k.toneladas, (v) => fmt(v, 1), " t"], ["Series de trabajo", k.series, (v) => fmt(v, 0), ""],
+    ["Intensidad media", k.intensidad, (v) => fmt(v, 0), " %"], ["PRs", k.prs, (v) => fmt(v, 0), ""],
+  ].map(([nombre, x, f, suf]) => `<div class="box"><div class="lab" style="margin-bottom:2px">${nombre}</div><div class="k">${p && nombre !== "Sesiones" ? "—" : x.valor === null ? "—" : f(x.valor)}<span class="mut" style="font-size:12px">${p || x.valor === null ? "" : suf}</span></div>
+    ${p ? `<div class="mut" style="font-size:10.5px">semana de pausa</div>` : `<div style="font-size:10.5px;margin-top:2px">${delta(x.delta_anterior, x.anterior === null ? "" : `anterior: ${f(x.anterior)}${suf}`)} <span class="mut">vs anterior</span><br>${delta(x.delta_media4, x.media4 === null ? "" : `media de 4 semanas: ${fmt(x.media4, 1)}${suf}`)} <span class="mut">vs media 4</span></div>`}</div>`).join(""));
+  bloque("s-rev", { r: w.repaso, p: w.pausa }, ({ r, p }) => `<div class="fila"><span class="lab">Repaso de la semana · por Claude</span><span class="mut" style="font-size:10.5px">${r && r.generado_texto ? `generado ${esc(r.generado_texto)}` : ""}</span></div>
+    <div style="font-size:12px;line-height:1.7">${r && r.lineas.length ? r.lineas.map((l) => `<div class="linea-rev"><span style="color:${MARCA_COLOR[l.marca] || "inherit"}">${esc(l.marca)}</span><span>${esc(l.texto)}</span></div>`).join("")
+      : p ? `<div class="linea-rev"><span style="color:${MARCA_COLOR["◇"]}">◇</span><span>Semana de pausa declarada. No cuenta para la racha ni para las medias.</span></div>`
+      : `<div class="recordatorio">No hiciste el repaso esta semana · ejecuta <b>/gymhub:semana</b></div>`}</div>`);
+  bloque("s-grp", w.grupos, (gs) => `<div class="fila"><span class="lab">Series por grupo</span><span class="mut" style="font-size:10.5px"><span style="color:${G.MARCA}">■</span> esta semana <span style="color:${G.MARCA3}">■</span> media 4 sem</span></div>
+    ${gs.map((g) => `<div style="margin-bottom:6px" data-tt="${esc(g.nombre)}: ${fmt(g.series)} series esta semana · media de 4 semanas ${g.media4 === null ? "—" : fmt(g.media4)}${g.aviso ? " · por debajo del 70 %" : ""}"><div class="fila peq"><span>${esc(g.nombre)}${g.aviso ? ` <span class="dn">▲</span>` : ""}</span><span><b style="font-weight:500">${fmt(g.series)}</b> <span class="mut">/ ${g.media4 === null ? "—" : fmt(g.media4)}</span></span></div>
+      <div class="barra-g"><div style="width:${g.pct}%;background:${g.aviso ? "#EF9F27" : G.MARCA}"></div></div><div class="barra-g media"><div style="width:${g.pct_media}%"></div></div></div>`).join("")}`);
+  const desde = Math.max(0, ultima - 25);
+  bloque("s-cump", { racha: w.racha, i, tira: S.semanas.slice(desde).map((x) => x.estado + x.clave) }, () => `<div class="lab">Semanas cumplidas</div>
+    <div style="display:flex;align-items:baseline;gap:6px"><span class="k">${w.racha}</span><span class="mut" style="font-size:11px">seguida${w.racha === 1 ? "" : "s"} cumpliendo tu objetivo</span></div>
+    <div class="tira">${S.semanas.slice(desde).map((x, j) => { const k = desde + j, [color, nombre] = ESTADO[x.estado]; return `<button class="cel-sem${k === i ? " sel" : ""}${k > i ? " despues" : ""}${x.estado === "pausa" ? " pausa" : ""}" data-ir="${k}" style="background:${color}" data-tt="sem ${x.semana} · ${x.estado === "pausa" ? "pausa" : `${x.kpis.sesiones.valor}/${x.objetivo}`} · ${nombre}" aria-label="Semana ${x.semana}: ${nombre}"></button>`; }).join("")}</div>
+    <div class="mut" style="font-size:10.5px"><span style="color:#1D9E75">■</span> cumplida <span style="color:#FAC775">■</span> a 1 sesión <span style="color:#E24B4A">■</span> fallada <span style="color:var(--text-muted)">◇</span> pausa <span style="color:var(--cal-0)">■</span> en curso</div>`);
+  bloque("s-qa", { r: w.repaso }, ({ r }) => `<div class="lab">Tu repaso del domingo</div>${r && r.preguntas.length ? r.preguntas.map((q) => `<div class="qa"><div class="mut" style="font-size:11px">${esc(q.pregunta)}</div><div>${esc(q.respuesta)}</div></div>`).join("")
+    : `<div class="mut" style="font-size:11.5px;padding:6px 0">Sin repaso de esta semana.<br>Ejecuta <b style="color:var(--text-primary);font-weight:500">/gymhub:semana</b> en Claude Code y responde 3 preguntas.</div>`}`);
+  bloque("s-mes", w.mes, (m) => `<div class="lab">${esc(m.titulo)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${[["Sesiones", fmt(m.hasta.sesiones, 0), fmt(m.anterior.sesiones, 0)], ["Toneladas", fmt(m.hasta.toneladas, 1), fmt(m.anterior.toneladas, 1)], ["PRs", fmt(m.hasta.prs, 0), fmt(m.anterior.prs, 0)], ["Semanas cumplidas", `${m.hasta.cumplidas}/${m.hasta.semanas}`, `${m.anterior.cumplidas}/${m.anterior.semanas}`]]
+      .map(([n, v, a]) => `<div class="mini-mes"><div class="lab" style="margin:0">${n}</div><b style="font-weight:500">${v}</b> <span class="mut" style="font-size:10.5px">${esc(m.anterior.nombre)}: ${m.anterior.sin_datos ? "—" : a}</span></div>`).join("")}</div>
+    <div class="barras-mes">${m.barras.filter((b) => !b.futura).map((b) => `<div data-tt="sem ${b.semana}: ${fmt(b.toneladas)} t" style="height:${Math.max(3, Math.round(b.pct * 0.44))}px;background:${b.seleccionada ? G.MARCA : G.MARCA2}"></div>`).join("")}</div>
+    <div class="mut" style="font-size:10.5px;margin-top:3px">volumen por semana del mes</div>`);
+};
+// Flechas del teclado: semana anterior y siguiente (solo en esta vista y fuera de los campos de texto)
+document.addEventListener("keydown", (e) => {
+  if (G.vista !== "semana" || (e.target.closest && e.target.closest("input,textarea,select")) || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  const S = datosSemana();
+  if (!S.semanas || !S.semanas.length) return;
+  e.preventDefault();
+  ir(indice(S) + (e.key === "ArrowLeft" ? -1 : 1));
+});
 })();
 </script>
 </body></html>
