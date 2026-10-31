@@ -279,3 +279,32 @@ Con `scripts/e2e-persona.mjs` y el modelo por defecto (Opus), en carpetas tempor
 | 5 · calistenia y cardio (WhatsApp) | 43 s | 0,39 USD | 5/5 | 8/8 | Creó `pino-pared` en el catálogo |
 
 En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.md` escrito y las dudas concretas en `revision.md`. En la primera ejecución de la persona 1, Claude contó que un apóstrofo bloqueaba un heredoc. No se pudo reproducir: las pruebas con `12'5` y `didn't` dentro del heredoc pasan. Aun así, queda la alternativa `--fichero`.
+
+## 8. Decisiones de la Fase 4 (web base, Panel y Rex)
+
+- **`web/dashboard.html`**, un solo fichero (unos 28 KB) con HTML, CSS y JS. Sin librerías, sin CDN y sin fuentes externas; `pnpm lint` falla si aparece una URL de red, un `<link>`, `fetch` o un `src` que no sea `datos.js` o `version.js`. Usa las variables de color de las maquetas en claro y oscuro (`prefers-color-scheme`). Ancho máximo de 980 px; por debajo de 700 px, una sola columna.
+- **La página no calcula:** `lib/panel.mjs` prepara cada cifra del Panel (KPIs, calendario, progresión con su eje, objetivos, series por grupo con su estado, rutina, semana, sensaciones, descarga y Rex). La página solo da formato (coma decimal) y dibuja el SVG.
+- **Repintado por bloques:** cada bloque guarda el JSON que pintó y solo se repinta si cambia. La pestaña, los filtros (en el `#ancla`) y el scroll se conservan.
+- **Pestañas:** clic, teclas `1`–`5` y `#ancla` (`#progreso`, `#analisis?modo=volumen`, `#ejercicios/press-banca`).
+  - Los comandos de vista escriben `navegar` en los datos; la pestaña abierta cambia en ≤ 1 s.
+  - Una página `file://` no puede avisar de que está abierta, así que esos comandos solo abren otra pestaña si gymhub no ha abierto la web en las últimas 12 h (`.gymhub/abierta.json`). Si no la tienes abierta, `/gymhub:web`.
+  - Si la página se abre con `#ancla`, manda el ancla.
+- **Banner de proceso:** «Normalizando · lote 7 de 18 (2024-03) · 41 %», con su barra, mientras hay un proceso activo, y «Listo · …» durante 10 minutos al terminar. Si `datos.js` no se puede leer dos veces seguidas, sale un aviso discreto bajo la cabecera.
+- **Panel, decisiones de detalle:**
+  - **Volumen:** se compara con la semana anterior **hasta el mismo día** de la semana, porque a mitad de semana compararla entera daría siempre en negativo.
+  - **Progresión:** el principal más reciente con al menos 2 sesiones en kg, o el que se elija con `/gymhub:ejercicio` (`.gymhub/panel.json`).
+  - **Rutina de hoy:** la sesión de hoy si ya está; si no, la plantilla con `dia:` de hoy; si no, el tipo que más veces sigue al último entrenado en las 12 últimas semanas.
+  - **Grupos:** a dos columnas si hay más de 6.
+  - **Descarga sugerida:** 3 semanas seguidas con RPE medio ≥ 8,5, o al menos 2 principales sin mejorar su e1RM en 4 semanas frente a las 8 anteriores.
+- **Rex** (SVG pixelado, el sprite de la maqueta). Prioridad de estados:
+  1. levantando / descansando (con un entreno en vivo, Fase 7);
+  2. PR en las últimas 24 h: salta con `✦`;
+  3. entreno de hoy hecho, o semana cumplida: reposo, con el ojo cerrado, `z` y la mancuerna en el suelo;
+  4. «¡Hoy toca …!»: la mancuerna sube y baja, como en la maqueta.
+
+  Nivel: 1 + 1 por cada 25 sesiones. Respeta `prefers-reduced-motion`.
+- **Comprobado con la web de verdad** (regla 12):
+  - **Capturas:** con `scripts/captura.mjs` (Edge sin ventana), en claro, en oscuro y a 560 px, comparadas con `docs/maquetas/panel.html`.
+  - **`tests/web/medir-web.mjs` en Edge de Windows:** cada cambio se ve en 0,1–0,86 s, y un `/refresh` sintético de 3 lotes se ve avanzar en el banner hasta «Listo · 3 sesiones nuevas».
+  - **`pnpm test:web`** (`tests/web/interaccion.mjs`, Playwright, en Chromium y Firefox): pestañas por clic y teclas, `#ancla`, navegación pedida por un comando (0,5–0,8 s), datos nuevos sin recargar y sin volver arriba, tema oscuro, móvil sin scroll horizontal y ninguna petición fuera de `file://`.
+- **Herramientas de desarrollo:** `playwright-core` como dependencia de desarrollo (pnpm), que usa los navegadores de `~/.cache/ms-playwright`. En esta máquina el Chromium de Linux no encuentra `libnspr4`; en vez de instalar paquetes del sistema, la prueba le pasa las librerías que trae el Firefox de Playwright (`LD_LIBRARY_PATH`). `pnpm demo <carpeta>` crea una carpeta con el historial sintético de 2 años (`tests/fixtures/historial.mjs`).

@@ -1,21 +1,371 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>gymhub</title>
-<style>body{margin:0;padding:32px;font-family:system-ui,"Segoe UI",sans-serif;background:#f5f4ef;color:#1f1e1d}@media (prefers-color-scheme:dark){body{background:#1a1a19;color:#f1efe8}}</style>
-</head><body><p>gymhub · la web llega en la Fase 4.</p><p id="v"></p>
+<style>
+:root{--surface-0:#f5f4ef;--surface-1:#faf9f5;--surface-2:#ffffff;--text-primary:#1f1e1d;--text-secondary:#5f5e5a;--text-muted:#888780;--border:rgba(0,0,0,.12);--border-strong:rgba(0,0,0,.2);--border-stronger:rgba(0,0,0,.4);--bg-success:#EAF3DE;--text-success:#3B6D11;--bg-warning:#FAEEDA;--text-warning:#854F0B;--text-danger:#A32D2D;--font-sans:system-ui,-apple-system,"Segoe UI",sans-serif;--font-mono:"Cascadia Mono","JetBrains Mono",ui-monospace,Consolas,monospace;--radius:8px;--marca:#D85A30;--marca-2:#F0997B;--marca-3:#F5C4B3;--marca-4:#993C1D;--cal-0:#F1EFE8}
+@media (prefers-color-scheme:dark){:root{--surface-0:#1a1a19;--surface-1:#232322;--surface-2:#2b2b29;--text-primary:#f1efe8;--text-secondary:#b4b2a9;--text-muted:#888780;--border:rgba(255,255,255,.12);--border-strong:rgba(255,255,255,.2);--border-stronger:rgba(255,255,255,.4);--bg-success:#27500A;--text-success:#C0DD97;--bg-warning:#633806;--text-warning:#FAC775;--text-danger:#F09595;--cal-0:#3a3a37}}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:var(--surface-0);color:var(--text-primary);font-family:var(--font-sans)}
+button{font:inherit;font-size:12px;color:var(--text-primary);background:transparent;border:.5px solid var(--border-strong);border-radius:var(--radius);padding:4px 10px;cursor:pointer}
+button:hover{background:var(--surface-1)}
+input{font:inherit;padding:4px 8px;border:.5px solid var(--border-strong);border-radius:var(--radius);background:var(--surface-2);color:var(--text-primary)}
+.app{max-width:980px;margin:0 auto}
+.grupos2{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
+.t{font-family:var(--font-mono);font-size:12px;line-height:1.5}
+.marco{background:var(--surface-1);border-radius:12px;padding:12px;border:.5px solid var(--border)}
+.box{background:var(--surface-2);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;min-width:0}
+.mut{color:var(--text-secondary)}
+.lab{color:var(--text-secondary);font-size:11px;margin-bottom:6px}
+.k{font-size:22px;font-weight:500;line-height:1.1}
+.bar{height:8px;border-radius:4px;background:var(--surface-1);overflow:hidden;border:.5px solid var(--border)}
+.bar>i{display:block;height:100%}
+.fila{display:flex;justify-content:space-between;gap:8px}
+.peq{font-size:11px}
+.vacio{font-size:11px;color:var(--text-muted);margin-top:6px}
+.rejilla{display:grid;gap:8px}
+.r-panel-1{grid-template-columns:minmax(0,1fr) 170px}
+.r-kpis{grid-template-columns:repeat(4,minmax(0,1fr));align-content:start}
+.r-dos{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.span4{grid-column:span 4}
+.mt8{margin-top:8px}
+/* cabecera y pestañas */
+.cab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.marca{font-weight:500;color:var(--marca)}
+.pestanas{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:10px}
+.pestanas button{border:none;border-radius:6px;padding:3px 8px;color:var(--text-secondary);font-family:var(--font-mono);font-size:12px}
+.pestanas button[aria-selected=true]{color:var(--text-primary);font-weight:500;box-shadow:inset 0 -1.5px 0 var(--marca);border-radius:0}
+.pestanas button .n{color:var(--text-muted);margin-right:4px}
+.aviso-datos{color:var(--text-danger);font-size:11px}
+/* banner de proceso */
+.banner{display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;border:.5px solid var(--marca);background:var(--surface-2)}
+.banner.on{display:block}
+.banner .bar{margin-top:6px}
+.banner.listo{border-color:var(--text-success)}
+.banner.listo .bar>i{background:#1D9E75!important}
+/* calendario */
+.cal{display:grid;grid-template-rows:repeat(7,10px);grid-auto-flow:column;grid-auto-columns:10px;gap:3px}
+.cal i{width:10px;height:10px;border-radius:2px;display:block}
+.cal i.fut{border:.5px dashed var(--border-strong)}
+.cal i.hoy{outline:1px solid var(--marca);outline-offset:1px}
+/* semana */
+.semana{display:flex;gap:6px;margin-bottom:10px}
+.semana>div{flex:1;text-align:center;padding:4px 0;border-radius:6px;font-size:11px;min-width:0}
+.semana .hecho{background:var(--bg-success);color:var(--text-success)}
+.semana .hoy{border:1px solid var(--marca);color:var(--marca)}
+.semana .descanso,.semana .futuro,.semana .pausa{background:var(--surface-1);color:var(--text-muted)}
+/* rutina */
+.rut{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:.5px solid var(--border)}
+.rut:last-child{border-bottom:none}
+.casillas{letter-spacing:2px;white-space:nowrap}
+/* Rex */
+.rex{display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.rex .sprite{position:relative;width:96px;height:84px}
+.rex svg{position:absolute;inset:0;image-rendering:pixelated;shape-rendering:crispEdges}
+@keyframes rex-a{0%,45%{opacity:1}50%,95%{opacity:0}100%{opacity:1}}
+@keyframes rex-b{0%,45%{opacity:0}50%,95%{opacity:1}100%{opacity:0}}
+@keyframes rex-salto{0%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+@keyframes rex-respira{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.035)}}
+@keyframes rex-z{0%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(1.5px,-2.5px)}}
+@keyframes rex-brillo{0%,100%{opacity:.2}50%{opacity:1}}
+.rex .fa{animation:rex-a 1.2s steps(1) infinite}.rex .fb{animation:rex-b 1.2s steps(1) infinite}
+.rex .salta{animation:rex-salto .8s ease-out infinite}
+.rex .respira{transform-origin:50% 100%;animation:rex-respira 3s ease-in-out infinite}
+.rex .z{animation:rex-z 2.4s ease-in-out infinite}
+.rex .brillo{animation:rex-brillo .9s ease-in-out infinite}
+.bocadillo{text-align:center;font-size:11px}
+@media (prefers-reduced-motion:reduce){.rex *{animation:none!important}}
+/* gráficos */
+svg text{font-family:var(--font-mono)}
+.tt{position:fixed;pointer-events:none;background:var(--surface-2);border:.5px solid var(--border-strong);border-radius:6px;padding:4px 8px;font-size:11px;display:none;white-space:nowrap;z-index:10;font-family:var(--font-mono)}
+.pie{margin-top:8px;padding:5px 10px;border-radius:6px;background:var(--surface-2);border:.5px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.vista{display:none}.vista.on{display:block}
+.proximamente{padding:24px;text-align:center}
+@media (max-width:700px){
+  .grupos2{grid-template-columns:1fr}
+  body{padding:10px}
+  .r-panel-1,.r-dos{grid-template-columns:minmax(0,1fr)}
+  .r-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .span4{grid-column:span 2}
+  .cal{grid-auto-columns:minmax(8px,1fr)}
+}
+</style>
+</head><body>
+<div class="app t">
+  <div class="marco">
+    <div class="cab"><span><span class="marca">gymhub</span> <span class="mut" id="carpeta"></span></span><span class="mut" id="cabecera"></span></div>
+    <div class="pestanas" role="tablist" id="pestanas"></div>
+    <div id="aviso-datos" class="aviso-datos"></div>
+    <div class="banner" id="banner" role="status" aria-live="polite"></div>
+    <section class="vista" id="v-panel" data-vista="panel"></section>
+    <section class="vista" id="v-progreso" data-vista="progreso"></section>
+    <section class="vista" id="v-analisis" data-vista="analisis"></section>
+    <section class="vista" id="v-diario" data-vista="diario"></section>
+    <section class="vista" id="v-ejercicios" data-vista="ejercicios"></section>
+  </div>
+</div>
+<div class="tt" id="tt"></div>
 <script>
 (() => {
-  let actual = null;
-  const cargar = (f, fin) => { const s = document.createElement("script"); s.src = f + "?t=" + Date.now(); s.onload = () => { s.remove(); fin(true); }; s.onerror = () => { s.remove(); fin(false); }; document.head.appendChild(s); };
-  function latido() {
-    window.GYMHUB_VERSION = null;
-    cargar("version.js", (ok) => {
-      const v = window.GYMHUB_VERSION;
-      if (!ok || !v || (actual && actual.version === v)) return setTimeout(latido, 1000);
-      window.GYMHUB = null;
-      cargar("datos.js", () => { const d = window.GYMHUB; if (d && d.version === v) { actual = d; document.getElementById("v").textContent = "datos " + v; } setTimeout(latido, 1000); });
-    });
+"use strict";
+// ── Utilidades de presentación (la página no calcula cifras: solo formatea lo que trae datos.js) ──
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (x, dec = 1) => { if (x === null || x === undefined || !isFinite(x)) return "—"; const r = Math.round(x * 10 ** dec) / 10 ** dec; const [e, f] = Math.abs(r).toFixed(dec).split("."); const m = e.replace(/\B(?=(\d{3})+(?!\d))/g, "."); const fr = f && Number(f) ? "," + f.replace(/0+$/, "") : ""; return (r < 0 ? "−" : "") + m + fr; };
+const DEPURAR = /depurar/.test(location.search);
+const log = (m) => { if (DEPURAR) console.log("GYMHUB-WEB " + m); };
+const VISTAS = [["panel", "Panel"], ["progreso", "Progreso"], ["analisis", "Análisis"], ["diario", "Diario"], ["ejercicios", "Ejercicios"]];
+const MARCA = "#D85A30", MARCA2 = "#F0997B", MARCA3 = "#F5C4B3", MARCA4 = "#993C1D", VERDE = "#1D9E75", AZUL = "#378ADD", AMBAR = "#BA7517";
+const HINT = "deja tus entrenos en CONTEXTO/ y usa /gymhub:refresh";
+const hace = (iso) => { if (!iso) return null; const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000); if (s < 90) return "hace un momento"; const m = s / 60; if (m < 60) return `hace ${Math.round(m)} min`; const h = m / 60; if (h < 36) return `hace ${Math.round(h)} h`; return `hace ${Math.round(h / 24)} d`; };
+
+// Tooltip común: cualquier elemento con data-tt
+const tt = $("tt");
+document.addEventListener("mousemove", (e) => {
+  const el = e.target.closest && e.target.closest("[data-tt]");
+  if (!el) { tt.style.display = "none"; return; }
+  tt.innerHTML = el.getAttribute("data-tt");
+  tt.style.display = "block";
+  const x = Math.min(e.clientX + 12, window.innerWidth - tt.offsetWidth - 8);
+  tt.style.left = x + "px"; tt.style.top = (e.clientY + 14) + "px";
+});
+
+// ── Estado de la página ──
+let D = null;                  // último datos.js bueno
+const pintados = {};           // bloque → JSON pintado (solo se repinta lo que cambia)
+let vista = "panel", sub = {}; // vista activa y sus parámetros (#ejercicios/press-banca, #analisis?modo=volumen)
+let navAplicada = Number(sessionStorage.getItem("gymhub-nav") || 0);
+const conAncla = !!location.hash; // si se abre con #ancla, manda el ancla
+
+function bloque(id, datos, pintar) {
+  const el = $(id);
+  if (!el) return;
+  const k = JSON.stringify(datos ?? null);
+  if (pintados[id] === k) return;
+  pintados[id] = k;
+  el.innerHTML = pintar(datos);
+  log("pinta=" + id);
+}
+const forzarRepintado = (prefijo) => { for (const k of Object.keys(pintados)) if (!prefijo || k.startsWith(prefijo)) delete pintados[k]; };
+
+// ── Router ──
+function leerHash() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ""));
+  const [ruta, qs] = h.split("?");
+  const [v, ...resto] = ruta.split("/");
+  const params = Object.fromEntries(new URLSearchParams(qs || ""));
+  if (resto.length) params.id = resto.join("/");
+  return { v: VISTAS.some(([k]) => k === v) ? v : "panel", params };
+}
+function irA(v, params = {}, { escribirHash = true } = {}) {
+  vista = v; sub = params;
+  if (escribirHash) {
+    const qs = Object.entries(params).filter(([k, x]) => k !== "id" && x).map(([k, x]) => `${k}=${encodeURIComponent(x)}`).join("&");
+    const h = `#${v}${params.id ? "/" + params.id : ""}${qs ? "?" + qs : ""}`;
+    if (location.hash !== h) history.replaceState(null, "", h);
   }
-  latido();
+  pintarPestanas();
+  for (const s of document.querySelectorAll(".vista")) s.classList.toggle("on", s.dataset.vista === v);
+  forzarRepintado("v-" + v);
+  pintarVista();
+}
+window.addEventListener("hashchange", () => { const { v, params } = leerHash(); irA(v, params, { escribirHash: false }); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest && e.target.closest("input,textarea,select") || e.ctrlKey || e.metaKey || e.altKey) return;
+  const n = Number(e.key);
+  if (n >= 1 && n <= VISTAS.length) irA(VISTAS[n - 1][0]);
+});
+function pintarPestanas() {
+  $("pestanas").innerHTML = VISTAS.map(([k, n], i) => `<button role="tab" aria-selected="${k === vista}" data-v="${k}"><span class="n">${i + 1}</span>${n}</button>`).join("");
+}
+$("pestanas").addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (b) irA(b.dataset.v); });
+
+// ── Latido: version.js cada 1 s (0,5 s con un proceso activo); datos.js solo si cambia ──
+const cargar = (fichero, alTerminar) => {
+  const s = document.createElement("script");
+  s.src = fichero + "?t=" + Date.now();
+  s.onload = () => { s.remove(); alTerminar(true); };
+  s.onerror = () => { s.remove(); alTerminar(false); };
+  document.head.appendChild(s);
+};
+let temporizador = null, fallos = 0;
+const programar = () => { clearTimeout(temporizador); temporizador = setTimeout(latido, D && D.proceso && D.proceso.activo ? 500 : 1000); };
+function latido() {
+  window.GYMHUB_VERSION = null;
+  cargar("version.js", (ok) => {
+    const v = window.GYMHUB_VERSION;
+    if (!ok || !v) { if (++fallos >= 2) $("aviso-datos").textContent = "No se pueden leer los datos (¿se ha movido la carpeta?). Vuelve a abrir la web con /gymhub:web."; return programar(); }
+    fallos = 0; $("aviso-datos").textContent = "";
+    if (D && v === D.version) { refrescarRelojes(); return programar(); }
+    window.GYMHUB = null;
+    cargar("datos.js", (ok2) => {
+      const d = window.GYMHUB;
+      if (ok2 && d && d.version === v) { D = d; log("v=" + d.version); alRecibir(); }
+      else log("datos-incompletos");
+      programar();
+    });
+  });
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) latido(); });
+
+let recibido = 0;
+function alRecibir() {
+  // Navegación pedida por un comando (/gymhub:progreso, /gymhub:ejercicio banca…)
+  const nav = D.navegar;
+  if (nav && nav.id && nav.id !== navAplicada) {
+    // Se aplica si es reciente (un comando acaba de pedirla), salvo en la primera carga con #ancla.
+    const reciente = Date.now() - new Date(nav.t).getTime() < 120000;
+    const primeraConAncla = navAplicada === 0 && conAncla && recibido === 0;
+    navAplicada = nav.id; sessionStorage.setItem("gymhub-nav", String(nav.id));
+    if (reciente && !primeraConAncla) {
+      const p = {};
+      if (nav.filtro) p[nav.vista === "ejercicios" ? "id" : nav.vista === "diario" ? "f" : "filtro"] = nav.filtro;
+      if (nav.modo) p.modo = nav.modo;
+      if (nav.kg) p.kg = nav.kg;
+      irA(nav.vista, p);
+    }
+  }
+  recibido = Date.now();
+  pintarComun();
+  pintarVista();
+}
+
+// ── Cabecera y banner ──
+function pintarComun() {
+  const p = (D.panel && D.panel.cabecera) || {};
+  const corta = String(D.carpeta || "").split("/").slice(-2).join("/");
+  $("carpeta").textContent = corta ? "· " + corta : "";
+  $("cabecera").textContent = [p.semana ? `semana ${p.semana}` : null, p.programa, p.fecha, D.ultimo_refresh ? `refresh ${hace(D.ultimo_refresh)}` : "sin refresh todavía"].filter(Boolean).join(" · ");
+  const pr = D.proceso || {};
+  const b = $("banner");
+  if (pr.mensaje !== pintarComun.ultimo) { pintarComun.ultimo = pr.mensaje; log("banner=" + (pr.activo ? "activo " : "") + (pr.mensaje || "")); }
+  const terminadoReciente = pr.fase === "listo" && pr.terminado && Date.now() - new Date(pr.terminado).getTime() < 10 * 60000;
+  if (pr.activo || terminadoReciente) {
+    b.className = "banner on" + (pr.activo ? "" : " listo");
+    const pct = pr.pct ?? 0;
+    b.innerHTML = `<div class="fila"><span>${esc(pr.mensaje || "Procesando…")}${pr.activo && pct !== null ? ` · ${pct} %` : ""}</span><span class="mut">${pr.dudas ? `${pr.dudas} duda${pr.dudas === 1 ? "" : "s"} en revision.md` : ""}</span></div>${pr.activo ? `<div class="bar"><i style="width:${pct}%;background:${MARCA}"></i></div>` : ""}`;
+  } else b.className = "banner";
+}
+function refrescarRelojes() {
+  if (!D) return;
+  const c = (D.panel && D.panel.cabecera) || {};
+  $("cabecera").textContent = [c.semana ? `semana ${c.semana}` : null, c.programa, c.fecha, D.ultimo_refresh ? `refresh ${hace(D.ultimo_refresh)}` : "sin refresh todavía"].filter(Boolean).join(" · ");
+  const r = D.panel && D.panel.rex;
+  if (vista === "panel" && r && r.estado === "descansando") { delete pintados["p-rex"]; pintarRex(); }
+}
+
+function pintarVista() {
+  if (!D) { pintarCargando(); return; }
+  if (vista === "panel") pintarPanel();
+  else if (typeof window["pintar_" + vista] === "function") window["pintar_" + vista]();
+  else $("v-" + vista).innerHTML = `<div class="box proximamente mut">Esta vista llega en la siguiente fase.</div>`;
+}
+function pintarCargando() { $("v-" + vista).innerHTML = `<div class="box proximamente mut">Cargando datos…</div>`; }
+
+// ── Rex (pixel art 13×10, con mancuerna) ──
+const REX = ["....####.....", "....#o####...", "....######...", "....####.....", "#..######....", "########.....", ".######......", "..#..#.......", "..#..#.......", "............."];
+const COL = { "#": MARCA, o: "#4A1B0C", d: "#444441", s: "#B4B2A9" };
+function rexSVG(clase, { dy = 0, ojo = "abierto", pesa = "brazo", extra = "" } = {}) {
+  let r = "";
+  REX.forEach((fila, y) => [...fila].forEach((ch, x) => {
+    if (ch === ".") return;
+    const c = ch === "o" && ojo === "cerrado" ? COL["#"] : COL[ch];
+    r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${c}"/>`;
+  }));
+  if (ojo === "cerrado") r += `<rect x="5" y="1.55" width="1" height="0.25" fill="${COL.o}"/>`;
+  if (pesa === "brazo") {
+    const y = 5 + dy;
+    r += `<rect x="7" y="${y + 0.3}" width="2" height="0.6" fill="${MARCA}"/><rect x="8.5" y="${y + 0.35}" width="3.5" height="0.4" fill="${COL.s}"/><rect x="8.3" y="${y - 0.6}" width="0.8" height="2.2" fill="${COL.d}"/><rect x="11.4" y="${y - 0.6}" width="0.8" height="2.2" fill="${COL.d}"/>`;
+  } else if (pesa === "suelo") {
+    r += `<rect x="8.6" y="8.7" width="3.4" height="0.4" fill="${COL.s}"/><rect x="8.3" y="8" width="0.8" height="1.8" fill="${COL.d}"/><rect x="11.6" y="8" width="0.8" height="1.8" fill="${COL.d}"/>`;
+  }
+  return `<svg class="${clase}" width="96" height="84" viewBox="0 0 13 11" aria-hidden="true">${r}${extra}</svg>`;
+}
+function rexSprite(estado) {
+  if (estado === "pr") return `<div class="salta" style="position:absolute;inset:0">${rexSVG("", { dy: -3, extra: `<text x="0.2" y="2" font-size="2" fill="#EF9F27" class="brillo">✦</text><text x="10.5" y="1.6" font-size="1.6" fill="#EF9F27" class="brillo">✦</text>` })}</div>`;
+  if (estado === "reposo") return rexSVG("", { ojo: "cerrado", pesa: "suelo", extra: `<text x="9.6" y="1.8" font-size="1.8" fill="var(--text-secondary)" class="z">z</text>` });
+  if (estado === "descansando") return `<div class="respira" style="position:absolute;inset:0">${rexSVG("", { dy: 1 })}</div>`;
+  return rexSVG("fa", { dy: 0 }) + rexSVG("fb", { dy: -3 });
+}
+const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.max(0, Math.round(s % 60))).padStart(2, "0")}`;
+function pintarRex() {
+  const r = D.panel && D.panel.rex;
+  if (!r) return;
+  let bocadillo = r.bocadillo;
+  if (r.estado === "descansando" && r.descanso) {
+    const pasado = (Date.now() - recibido) / 1000;
+    const quedan = Math.max(0, r.descanso.restante_s - pasado);
+    bocadillo = quedan > 0 ? `descanso ${mmss(quedan)}` : "¡a por la siguiente!";
+  }
+  bloque("p-rex", { ...r, bocadillo }, () => `<div class="lab" style="align-self:flex-start">Rex</div>
+    <div class="sprite" role="img" aria-label="Rex: ${esc(r.estado)}">${rexSprite(r.estado)}</div>
+    <div class="bocadillo">“${esc(bocadillo)}”</div>
+    <div class="mut peq" style="text-align:center;margin-top:4px">${esc(r.detalle || "")}</div>`);
+}
+
+// ── Vista Panel ──
+const barra = (pct, color) => `<div class="bar" style="margin-top:2px"><i style="width:${Math.max(0, Math.min(100, pct || 0))}%;background:${color}"></i></div>`;
+const NIV = ["var(--cal-0)", MARCA3, MARCA2, MARCA, MARCA4];
+
+function pintarPanel() {
+  const P = D.panel || {};
+  const cont = $("v-panel");
+  if (!cont.dataset.armado) {
+    cont.dataset.armado = "1";
+    cont.innerHTML = `<div class="rejilla r-panel-1">
+        <div class="rejilla r-kpis"><div class="box" id="p-k1"></div><div class="box" id="p-k2"></div><div class="box" id="p-k3"></div><div class="box" id="p-k4"></div>
+          <div class="box span4" id="p-cal"></div></div>
+        <div class="box rex" id="p-rex"></div></div>
+      <div class="rejilla r-dos mt8"><div class="box"><div id="p-prog"></div><div class="lab mt8">Hacia tus objetivos</div><div id="p-obj"></div></div><div class="box" id="p-grp"></div></div>
+      <div class="rejilla r-dos mt8"><div class="box" id="p-rut"></div><div class="box" id="p-sem"></div></div>
+      <div class="pie" id="p-pie"></div>`;
+  }
+  const k = P.kpis || { racha: {}, sesiones: {}, volumen: {}, prs_mes: {} };
+  bloque("p-k1", k.racha, (x) => `<div class="lab">Racha</div><div class="k" style="color:${MARCA}">${x.dias ?? 0}<span class="mut" style="font-size:12px"> día${x.dias === 1 ? "" : "s"}</span></div><div class="mut peq">${x.mejor ? `mejor: ${x.mejor}` : "&nbsp;"}</div>`);
+  bloque("p-k2", k.sesiones, (x) => `<div class="lab">Sesiones semana</div><div class="k">${x.hechas ?? 0}<span class="mut" style="font-size:13px"> /${x.objetivo ?? 4}</span></div><div class="bar" style="margin-top:6px"><i style="width:${x.pct || 0}%;background:${VERDE}"></i></div>`);
+  bloque("p-k3", k.volumen, (x) => `<div class="lab">Volumen semana</div><div class="k">${esc(x.texto ?? "0")}<span class="mut" style="font-size:12px"> t</span></div><div class="peq" style="color:${x.delta_pct === null || x.delta_pct === undefined ? "var(--text-muted)" : x.delta_pct >= 0 ? "var(--text-success)" : "var(--text-warning)"}" data-tt="frente a la semana anterior a estas alturas">${x.delta_pct === null || x.delta_pct === undefined ? "sin semana anterior" : `${x.delta_pct >= 0 ? "+" : "−"}${Math.abs(x.delta_pct)}% vs anterior`}</div>`);
+  bloque("p-k4", k.prs_mes, (x) => `<div class="lab">PRs del mes</div><div class="k" style="color:${AMBAR}">${x.n ?? 0}</div><div class="mut peq">${x.ultimo ? `último: ${esc(x.ultimo)}` : "ninguno todavía"}</div>`);
+  bloque("p-cal", { cal: D.calendario, vacio: P.vacio }, ({ cal, vacio }) => `<div class="fila"><span class="lab">Últimas 12 semanas</span><span class="mut peq">menos ${NIV.slice(1).map((c) => `<span style="color:${c}">■</span>`).join("")} más</span></div>
+    <div class="cal">${(cal ? cal.semanas : []).flat().map((d) => `<i class="${d.nivel < 0 ? "fut" : ""}${d.fecha === D.hoy ? " hoy" : ""}" style="${d.nivel < 0 ? "" : `background:${NIV[d.nivel]}`}" data-tt="${esc(d.fecha)}${d.sesiones ? ` · ${d.series} series de trabajo${d.tipos.filter(Boolean).length ? ` · ${esc(d.tipos.filter(Boolean).join(", "))}` : ""}` : d.pausa ? " · pausa" : d.nivel < 0 ? "" : " · descanso"}"></i>`).join("")}</div>${vacio ? `<div class="vacio">${HINT}</div>` : ""}`);
+  pintarRex();
+  bloque("p-prog", P.progresion, (g) => {
+    if (!g) return `<div class="lab">Progresión 1RM estimado</div><svg width="100%" height="90" viewBox="0 0 300 90" preserveAspectRatio="none"><line x1="0" y1="80" x2="300" y2="80" stroke="var(--border)"/></svg><div class="vacio">${HINT}</div>`;
+    const n = g.puntos.length, X = (i) => (n === 1 ? 150 : 5 + (i * 285) / (n - 1)), Y = (v) => 85 - ((v - g.eje.min) / (g.eje.max - g.eje.min)) * 70;
+    const pts = g.puntos.map((p, i) => `${X(i).toFixed(1)},${Y(p.e1rm).toFixed(1)}`).join(" ");
+    const ult = g.puntos[n - 1];
+    const delta = g.delta === null ? "" : `<span class="peq" style="color:${g.delta >= 0 ? "var(--text-success)" : "var(--text-warning)"}">${g.delta >= 0 ? "+" : "−"}${fmt(Math.abs(g.delta))} kg en ${g.semanas} sem</span>`;
+    return `<div class="fila"><span class="lab">Progresión 1RM estimado · ${esc(g.nombre.toLowerCase())}</span>${delta}</div>
+      <svg width="100%" height="90" viewBox="0 0 300 90" preserveAspectRatio="none" role="img"><title>${esc(g.nombre)}: e1RM por semana</title>
+      ${g.objetivo ? `<line x1="0" y1="${Y(g.objetivo).toFixed(1)}" x2="300" y2="${Y(g.objetivo).toFixed(1)}" stroke="var(--border-strong)" stroke-dasharray="3 3"/><text x="296" y="${(Y(g.objetivo) - 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text-secondary)">objetivo ${fmt(g.objetivo)}</text>` : ""}
+      <polyline fill="none" stroke="${MARCA}" stroke-width="2" points="${pts}" vector-effect="non-scaling-stroke"/>
+      ${g.puntos.map((p, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.e1rm).toFixed(1)}" r="${i === n - 1 ? 3.5 : 6}" fill="${i === n - 1 ? MARCA : "transparent"}" data-tt="semana del ${esc(p.semana)} · e1RM ${fmt(p.e1rm)} kg"/>`).join("")}
+      ${ult ? `<text x="${Math.min(284, X(n - 1) - 6).toFixed(1)}" y="${(Y(ult.e1rm) - 6).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text-primary)">${fmt(ult.e1rm)}</text>` : ""}</svg>`;
+  });
+  bloque("p-obj", P.objetivos, (o) => (o && o.length ? o.map((x) => `<div style="margin-bottom:6px"><div class="fila peq"><span>${esc(x.nombre)}</span><span>${x.sin_datos ? `<span class="mut">sin datos en 8 sem</span> / ${fmt(x.objetivo)} kg` : `${fmt(x.actual)} / ${fmt(x.objetivo)} kg · <span style="font-weight:500">${x.pct}%</span>`}</span></div>${barra(x.pct, MARCA)}</div>`).join("") : `<div class="vacio">Pon tus objetivos en FICHA.md (por ejemplo «- sentadilla: 140 kg») o con /gymhub:configurar.</div>`));
+  bloque("p-grp", { g: P.grupos, nota: P.grupos_nota }, ({ g, nota }) => `<div class="lab">Series por grupo · esta semana</div><div class="${g && g.length > 6 ? "grupos2" : ""}">${(g && g.length ? g : []).map((x) => { const c = x.estado === "ok" ? VERDE : x.estado === "medio" ? AZUL : AMBAR; return `<div style="margin-bottom:7px"><div class="fila peq"><span>${esc(x.nombre)}${x.aviso ? ` <span style="color:var(--text-warning)" data-tt="por debajo del 70 % pasado el miércoles">▲</span>` : ""}</span><span style="color:${c}">${fmt(x.series)}/${fmt(x.objetivo)}</span></div>${barra(x.pct, c)}</div>`; }).join("") || `<div class="vacio">Pon tus series objetivo por grupo en FICHA.md.</div>`}</div>${nota ? `<div class="mut peq" style="margin-top:4px">${esc(nota)}</div>` : ""}`);
+  bloque("p-rut", P.rutina, (r) => {
+    if (!r) return `<div class="lab">Rutina de hoy</div><div class="vacio">Sin rutina: guarda tus rutinas en plantillas/ o importa unas cuantas sesiones.</div>`;
+    const tit = r.origen === "hecha" ? "Hoy has hecho" : "Rutina de hoy";
+    const origen = { hecha: "sesión de hoy", plantilla: "plantilla", rotacion: "según tu rotación" }[r.origen];
+    return `<div class="fila"><span class="lab">${tit} · ${esc(r.titulo.toLowerCase())} <span class="mut">(${origen})</span></span><span class="mut peq">${r.duracion_min ? `~${r.duracion_min} min` : ""}</span></div>
+      ${r.ejercicios.map((e) => `<div class="rut"><span>${esc(e.nombre)} <span class="mut peq">${esc(e.prescripcion)}</span></span><span class="casillas">${`<span style="color:${VERDE}">■</span>`.repeat(e.hechas)}<span class="mut">${"□".repeat(Math.max(0, e.total - e.hechas))}</span></span></div>`).join("")}`;
+  });
+  bloque("p-sem", { s: P.semana, sen: P.sensaciones, d: P.descarga }, ({ s, sen, d }) => `<div class="lab">Esta semana</div>
+    <div class="semana">${(s || []).map((x) => `<div class="${x.estado}" data-tt="${esc(x.fecha)}"><div>${x.letra}</div><div>${esc(x.texto || "·")}</div></div>`).join("")}</div>
+    <div class="lab">Sensaciones · 7 días</div>
+    <div class="peq" style="line-height:1.8">RPE medio <span style="font-weight:500">${sen && sen.rpe !== null ? fmt(sen.rpe) : "—"}</span> <span style="color:${AMBAR}">${"█".repeat(Math.round((sen && sen.rpe_pct || 0) / 10))}</span><span class="mut">${"░".repeat(10 - Math.round((sen && sen.rpe_pct || 0) / 10))}</span><br>
+    Sueño medio <span style="font-weight:500">${esc(sen && sen.sueno || "—")}</span>${sen && sen.molestias && sen.molestias.length ? "<br>" + sen.molestias.map((m) => `${esc(m.zona)} ${m.estado === "bien" ? "bien" : `<span style="color:var(--text-warning)">▲</span>`}`).join(" · ") : ""}
+    ${d ? `<br><span style="color:var(--text-warning)">▲</span> <span data-tt="${esc(d.motivo)} · es solo una sugerencia">${esc(d.texto)}</span>` : ""}</div>`);
+  bloque("p-pie", { r: P.rutina }, () => `<span>/gymhub:refresh · /gymhub:ejercicio &lt;nombre&gt; · /gymhub:semana · /gymhub:discos &lt;kg&gt;</span><span class="mut">teclas 1–5 para cambiar de vista</span>`);
+}
+
+// Las demás vistas se añaden aquí (Fases 5 y 6).
+window.gymhub = { bloque, esc, fmt, barra, HINT, MARCA, MARCA2, MARCA3, MARCA4, VERDE, AZUL, AMBAR, NIV, get D() { return D; }, get sub() { return sub; }, irA, rexSVG };
+
+// ── Arranque ──
+const inicio = leerHash();
+irA(inicio.v, inicio.params, { escribirHash: !!location.hash });
+latido();
+setInterval(refrescarRelojes, 1000);
 })();
-</script></body></html>
+</script>
+</body></html>
