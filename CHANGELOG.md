@@ -1,5 +1,17 @@
 # Changelog
 
+## Sin publicar
+
+- **Pestaña Semana** (tecla `6`, `#semana/AAAA-Www`), para la revisión del fin de semana:
+  - las cinco cifras de la semana frente a la anterior y a la media de las 4 previas, sin las semanas de pausa declarada;
+  - el repaso de Claude y tus respuestas de `/gymhub:semana`, o un recordatorio si no lo hiciste;
+  - las series por grupo con aviso por debajo del 70 %;
+  - la racha de semanas cumplidas con una tira de 26 semanas;
+  - el resumen del mes frente al anterior;
+  - navegación con las flechas.
+- `/gymhub:semana` hace tres preguntas, de una en una, y escribe `semanas/AAAA-Www.md` con un formato fijo, que valida el script.
+- `/gymhub:refresh` en sábado o domingo recuerda hacer el repaso si la semana tiene sesiones y no lo tiene.
+
 ## v0.1.0 · 2026-10-31
 
 Primera versión.

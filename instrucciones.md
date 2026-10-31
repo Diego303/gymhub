@@ -78,8 +78,8 @@ Ya tienes la estructura: `CONTEXTO/` (tu bandeja de entrada), `FICHA.md`, `sesio
    - **un fichero nuevo** con lo de esta semana (por ejemplo, `semana-45.txt`);
    - **la misma nota de siempre, entera**, si la llevas en el móvil y va creciendo. gymhub reconoce lo que ya importó y solo coge lo nuevo. Si cambiaste algo de un día ya importado, ese día se guarda aparte (`AAAA-MM-DD-2.md`) y te lo pregunta en `revision.md`.
 3. `/gymhub:refresh`.
-4. `/gymhub:semana`: tu resumen de la semana en `semanas/AAAA-Www.md`, con lo que conviene ajustar.
-5. Mira la web: Panel (tu semana), Progreso, Análisis, Diario y Ejercicios. Cambia de vista con las teclas `1` a `5`.
+4. **El repaso del fin de semana:** `/gymhub:semana`. gymhub calcula las cifras de tu semana y Claude te hace tres preguntas, de una en una: cómo te has sentido, si has tenido molestias y qué quieres priorizar la semana que viene. Con eso escribe un repaso corto (5 líneas como mucho) en `semanas/AAAA-Www.md`. Si haces `/gymhub:refresh` en sábado o domingo sin haberlo hecho, te lo recuerda.
+5. Mira la web. La pestaña **Semana** (tecla `6`) es la de la revisión: tus cifras frente a la semana anterior y a tu media, el repaso, tus respuestas, las series por grupo, la racha de semanas cumplidas y el mes. Las flechas `←` `→` te llevan a semanas anteriores; las que no tienen repaso te lo recuerdan. El resto: Panel, Progreso, Análisis, Diario y Ejercicios (teclas `1` a `5`).
 
 ## 6. Otras cosas que puedes hacer
 
@@ -110,6 +110,7 @@ Ya tienes la estructura: `CONTEXTO/` (tu bandeja de entrada), `FICHA.md`, `sesio
 ## 8. Copias, actualizar y desinstalar
 
 - **Copia de seguridad:** toda tu información está en tu carpeta. `.gymhub/` se regenera solo y lo demás es Markdown. Basta con copiar la carpeta.
+- **Después de actualizar gymhub,** lo que ya importaste sigue valiendo (tus datos son tus Markdown). Haz un `/gymhub:refresh` (aunque no haya nada nuevo) o `/gymhub:web`: recalculan con la versión nueva y ponen al día la página de tu carpeta. Una pestaña ya abierta se recarga sola desde esta versión; si la tenías abierta con una versión anterior a la pestaña Semana, recárgala tú una vez (F5).
 - **Actualizar gymhub:**
   - instalado desde el repo local, basta con tener el repo al día; en una sesión abierta, `/reload-plugins`;
   - instalado desde GitHub, `claude plugin update gymhub --scope project` y después `/reload-plugins`.

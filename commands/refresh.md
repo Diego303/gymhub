@@ -42,3 +42,5 @@ Usa siempre `node "${CLAUDE_PLUGIN_ROOT}/bin/gymhub.mjs" <subcomando>` (en lo qu
    - lo que ignoraste y por qué, si es relevante.
 
    Si hay dudas, sugiere `/gymhub:revision`. Las cifras (e1RM, PRs, volumen) son las del script: no calcules ni estimes ninguna.
+
+   Si el cierre (o el estado, cuando no hay nada nuevo) trae una línea `SUGERENCIA`, termina tu respuesta con su texto, tal cual: «¿Hacemos el repaso de la semana? → /gymhub:semana».

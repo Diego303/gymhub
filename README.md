@@ -22,6 +22,7 @@ gymhub es un plugin de Claude Code con una web local como interfaz, pensada para
 - **Análisis:** radar de equilibrio por patrón de movimiento (fuerza o volumen), ratios empuje:tirón, cuádriceps:femoral y banca:remo, carga aguda:crónica, disposición del día, predicción de objetivos, ejercicios estancados y lo que dicen tus datos (por ejemplo, cómo te afecta dormir poco).
 - **Diario:** tus notas y sensaciones en una línea de tiempo, molestias por zona semana a semana e hitos (PRs, cambios de programa, pausas, primeras veces).
 - **Ejercicios:** la ficha de cada ejercicio con todo su historial: progresión desde el primer día, tu mejor peso para cada número de repeticiones, últimas sesiones y lo que has escrito sobre él.
+- **Semana:** la revisión del fin de semana. Sesiones, volumen, series, intensidad y PRs frente a la semana anterior y a tu media de 4 semanas. Además, el repaso de Claude y tus respuestas de `/gymhub:semana`, las series por grupo, tu racha de semanas cumplidas y el resumen del mes. Te mueves entre semanas con las flechas.
 - **Importación en directo:** durante un `/gymhub:refresh` ves el avance lote a lote, y las gráficas y los récords crecen mientras se importa.
 - **Tu historial en Markdown:** una ficha por sesión, legible y editable, con el texto original guardado. Nada se pierde.
 - **Rex,** un pequeño compañero de píxeles que entrena contigo.
@@ -31,6 +32,8 @@ gymhub es un plugin de Claude Code con una web local como interfaz, pensada para
 | ![Progreso](docs/capturas/progreso.png) | ![Análisis](docs/capturas/analisis.png) |
 | **Diario** | **Ejercicios** |
 | ![Diario](docs/capturas/diario.png) | ![Ejercicios](docs/capturas/ejercicios.png) |
+| **Semana** | **Semana (tema oscuro)** |
+| ![Semana](docs/capturas/semana.png) | ![Semana en oscuro](docs/capturas/semana-oscuro.png) |
 
 ## Requisitos
 
@@ -73,7 +76,7 @@ Da igual cómo lo apuntes: `3x10 50kg`, `50x10x3`, `10 - 50 kg x 3`, `bench 3x5 
 
 La primera vez, gymhub aprende cómo apuntas tú y lo guarda en `convenciones.md`: el orden de las fechas, tus abreviaturas, qué significa «nivel 7» en tus máquinas… Cada duda general te la pregunta una sola vez, y a partir de ahí lo aplica siempre igual.
 
-**Una semana normal:** entrenas y apuntas como siempre (en tu libreta, en el móvil, donde sea). Al llegar a casa, lo dejas en `CONTEXTO/`, haces `/gymhub:refresh` y revisas en la web cómo vas. El domingo, `/gymhub:semana`.
+**Una semana normal:** entrenas y apuntas como siempre (en tu libreta, en el móvil, donde sea). Al llegar a casa, lo dejas en `CONTEXTO/`, haces `/gymhub:refresh` y revisas en la web cómo vas. El fin de semana, `/gymhub:semana`: Claude te hace tres preguntas (cómo te has sentido, molestias, qué priorizas) y deja el repaso en la pestaña Semana. Si haces `/gymhub:refresh` en sábado o domingo y aún no has hecho el repaso, te lo recuerda.
 
 ### Comandos
 
@@ -85,7 +88,7 @@ Los comandos de un plugin llevan su nombre delante: `/gymhub:refresh`. **Truco:*
 | `/gymhub:refresh` | Importa lo que haya en `CONTEXTO/` y actualiza todo (la web lo muestra en directo) |
 | `/gymhub:panel` · `/gymhub:progreso` · `/gymhub:analisis [fuerza\|volumen]` · `/gymhub:diario [zona o ejercicio]` | Llevan la web a esa vista, por ejemplo `/gymhub:diario rodilla` |
 | `/gymhub:ejercicio <nombre>` | Resumen de un ejercicio en el chat y su ficha en la web |
-| `/gymhub:semana [AAAA-Www]` | Resumen de la semana en `semanas/` |
+| `/gymhub:semana [AAAA-Www]` | Repaso de la semana: 3 preguntas y el resumen en `semanas/AAAA-Www.md`, que se ve en la pestaña Semana |
 | `/gymhub:discos <kg>` | Qué discos poner en cada lado |
 | `/gymhub:revision` | Resolver las dudas de la importación |
 | `/gymhub:carpeta [ruta]` | Ver o cambiar dónde está tu carpeta de gimnasio |
@@ -97,7 +100,7 @@ También puedes hablarle a Claude con normalidad («apunta que hoy hice banca 3x
 ### La web
 
 - Se abre con `/gymhub:web` y se queda abierta: relee tus datos cada segundo y repinta solo lo que cambia.
-- Teclas `1` a `5` para cambiar de vista; `Esc` para salir de un campo de texto.
+- Teclas `1` a `6` para cambiar de vista; `Esc` para salir de un campo de texto. En la pestaña Semana, las flechas `←` `→` cambian de semana (y su dirección es `#semana/2026-W44`).
 - Los comandos de vista cambian la pestaña que ya tienes abierta. Solo abren otra si gymhub no ha abierto la web en las últimas 12 horas.
 - Tema claro u oscuro según tu sistema. En el móvil, en una sola columna, si abres el fichero.
 

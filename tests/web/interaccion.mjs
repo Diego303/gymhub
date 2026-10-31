@@ -28,12 +28,14 @@ for (const [nombre, lanzar] of NAVEGADORES) {
   const nav = await lanzar();
   const ctx = await nav.newContext({ viewport: { width: 1200, height: 900 } });
   const page = await ctx.newPage();
-  const peticiones = [];
+  const peticiones = [], errores = [];
   page.on("request", (r) => peticiones.push(r.url()));
+  page.on("console", (m) => { if (m.type() === "error") errores.push(m.text()); });
+  page.on("pageerror", (e) => errores.push(e.message));
   await page.goto(url + "#panel");
   await page.waitForFunction(() => document.querySelector("#p-k1 .k"), null, { timeout: 15000 });
-  await paso("abre en el Panel con 5 pestañas", async () => {
-    assert.equal(await page.$$eval("[role=tab]", (x) => x.length), 5);
+  await paso("abre en el Panel con 6 pestañas", async () => {
+    assert.equal(await page.$$eval("[role=tab]", (x) => x.length), 6);
     assert.equal(await vistaActiva(page), "panel");
     assert.match(await page.textContent("#p-k2"), /Sesiones semana/);
     assert.ok(await page.isVisible("#p-rex svg"));
@@ -103,6 +105,88 @@ for (const [nombre, lanzar] of NAVEGADORES) {
     assert.equal(await vistaActiva(page), "diario");
     await page.keyboard.press("Escape");
     await page.keyboard.press("1");
+  });
+  await paso("Semana: tecla 6, flechas, «volver a esta semana», la tira y #semana/AAAA-Www", async () => {
+    await page.keyboard.press("6");
+    assert.equal(await vistaActiva(page), "semana");
+    await page.waitForSelector("#s-cab");
+    const actual = await page.evaluate(() => window.gymhub.D.semana.actual);
+    const titulo = () => page.textContent("#s-cab div[style*='font-size:16px']");
+    const t0 = await titulo();
+    await page.keyboard.press("ArrowLeft");
+    assert.notEqual(await titulo(), t0);
+    assert.match(page.url(), /#semana\/\d{4}-W\d{2}$/);
+    await page.click("#s-cab button:has-text('volver a esta semana')");
+    assert.match(page.url(), new RegExp(`#semana/${actual}$`));
+    assert.match(await page.textContent("#s-cab"), /esta semana/);
+    await page.click(".tira .cel-sem >> nth=0");
+    assert.ok(await page.$eval(".tira .cel-sem >> nth=0", (b) => b.classList.contains("sel")));
+    await page.keyboard.press("ArrowRight");
+    assert.equal(await page.$$eval(".tira .cel-sem.sel", (x) => x.length), 1);
+    await page.keyboard.press("1");
+  });
+  await paso("Semana: recorrer 26 semanas con las flechas va fluido", async () => {
+    await page.keyboard.press("6");
+    await page.click("#s-cab button:has-text('volver a esta semana')").catch(() => {});
+    const t = await page.evaluate(() => {
+      const tiempos = [];
+      for (let k = 0; k < 25; k++) {
+        const a = performance.now();
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        tiempos.push(performance.now() - a);
+      }
+      return { total: tiempos.reduce((x, y) => x + y, 0), max: Math.max(...tiempos), url: location.hash };
+    });
+    console.log(`    (25 semanas: ${Math.round(t.total)} ms en total, la más lenta ${Math.round(t.max)} ms)`);
+    assert.ok(t.max < 100, `una semana tardó ${t.max} ms`);
+    for (let k = 0; k < 25; k++) await page.keyboard.press("ArrowRight");
+    assert.match(await page.textContent("#s-cab"), /esta semana/);
+    await page.keyboard.press("1");
+  });
+  await paso("Semana: el repaso de /semana aparece sin recargar (y la web va a esa semana)", async () => {
+    const { spawnSync } = await import("node:child_process");
+    const { readFileSync } = await import("node:fs");
+    const S = await page.evaluate(() => window.gymhub.D.semana);
+    const sin = S.semanas.filter((w) => !w.repaso && !w.pausa).at(-1);
+    const repaso = `## Repaso\n- ✓ Prueba de ${nombre}.\n- → Seguir igual.\n\n## Preguntas\n- ¿Cómo te has sentido?: Bien.\n- ¿Molestias?: Ninguna.\n- ¿Qué priorizas la semana que viene?: Dormir más.\n`;
+    await page.keyboard.press("6");
+    const t0 = Date.now();
+    const r = spawnSync(process.execPath, [join(process.cwd(), "bin/gymhub.mjs"), "semana", "guardar", sin.clave], { input: repaso, encoding: "utf8", env: process.env });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    await page.waitForFunction((txt) => document.getElementById("s-rev")?.textContent.includes(txt), `Prueba de ${nombre}.`, { timeout: 5000 });
+    console.log(`    (${Date.now() - t0} ms desde que se lanza «semana guardar», que también recalcula)`);
+    assert.match(page.url(), new RegExp(`#semana/${sin.clave}$`));
+    assert.match(await page.textContent("#s-qa"), /Dormir más\./);
+    assert.ok(readFileSync(join(carpeta, "semanas", `${sin.clave}.md`), "utf8").startsWith(`---\nsemana: ${sin.clave}\n`));
+    await page.keyboard.press("1");
+  });
+  await paso("tras actualizar el plugin, la página abierta se recarga sola (una vez)", async () => {
+    const { readFileSync, writeFileSync } = await import("node:fs");
+    const web = join(carpeta, ".gymhub/web");
+    // Simula una página y unos datos de una versión anterior del plugin…
+    const actual = readFileSync(join(web, "dashboard.html"), "utf8");
+    const vActual = actual.match(/const VERSION_WEB = "([^"]+)"/)[1];
+    writeFileSync(join(web, "dashboard.html"), actual.replace(`const VERSION_WEB = "${vActual}"`, 'const VERSION_WEB = "vieja"'));
+    writeFileSync(join(web, "datos.js"), readFileSync(join(web, "datos.js"), "utf8").replace(/"version":"[^"]+"/, '"version":"vieja1"').replace(/"version_web":"[^"]+"/, '"version_web":"vieja"'));
+    writeFileSync(join(web, "version.js"), 'window.GYMHUB_VERSION = "vieja1";\n');
+    const p2 = await ctx.newPage();
+    let cargas = 0;
+    p2.on("load", () => { if (p2.url().startsWith("file:")) cargas++; }); // Firefox cuenta también about:blank
+    await p2.goto(url + "#semana");
+    await p2.waitForFunction(() => window.gymhub?.D?.version === "vieja1");
+    // …y luego cualquier publicación (un /refresh, un /semana) con el plugin nuevo
+    publicar(carpeta);
+    await p2.waitForFunction((v) => document.documentElement.innerHTML.includes(`const VERSION_WEB = "${v}"`), vActual, { timeout: 5000 });
+    await p2.waitForFunction(() => window.gymhub?.D?.version && window.gymhub.D.version !== "vieja1");
+    assert.equal(cargas, 2, `se ha recargado exactamente una vez (cargas: ${cargas})`);
+    assert.match(p2.url(), /#semana/);
+    assert.equal(await p2.$eval("[aria-selected=true]", (b) => b.dataset.v), "semana");
+    await p2.close();
+  });
+  await paso("ningún error en la consola en las 6 vistas", async () => {
+    for (const k of ["1", "2", "3", "4", "5", "6"]) { await page.keyboard.press(k); await page.waitForTimeout(150); }
+    await page.keyboard.press("1");
+    assert.deepEqual(errores, []);
   });
   await paso("#ancla al abrir", async () => {
     const p2 = await ctx.newPage(); await p2.goto(url + "#analisis?modo=volumen");
