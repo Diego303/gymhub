@@ -349,3 +349,24 @@ En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.m
 - **Comprobado:**
   - capturas de las tres vistas frente a sus maquetas (en claro, en oscuro y a 560 px);
   - `pnpm test:web` en Chromium y Firefox: conmutador fuerza/volumen en el `#ancla`, chips y buscador del Diario, desplegar una sesión, filtro pedido por un comando, elegir ejercicio, rangos y el enlace de una fecha al Diario.
+
+## 11. Decisiones de la Fase 7 (comandos de seguimiento y registro en vivo)
+
+- **`/gymhub:semana [AAAA-Www|anterior]`:** el script (`semana`) prepara el borrador con todas las cifras: sesiones, series, volumen frente a la semana anterior, PRs, RPE, sueño, sensaciones, series por grupo frente a FICHA.md, molestias, A:C, descarga y estancados. Claude copia las cifras tal cual, añade 2 a 4 viñetas en «Qué ajustar» y lo guarda con `escribir semanas/AAAA-Www.md` (con copia si ya existía). Sin argumento, la semana actual; si todavía está vacía, la anterior.
+- **`/gymhub:ejercicio <nombre>`:** busca por nombre, alias, id o parte del nombre entre los ejercicios con historial. Si el alias exacto no tiene historial y solo hay uno parecido que sí lo tiene, se queda con ese («remo» → remo con mancuerna). Imprime el resumen, deja la gráfica del Panel en ese ejercicio (`.gymhub/panel.json`) y lleva la web a `#ejercicios/<id>`.
+- **`/gymhub:revision`:** `revision` numera las dudas y señala las sesiones de esa fecha; `revision marcar <n> --nota` las cierra. Para arreglar una sesión, `corregir <ruta>`:
+  - valida la sesión y guarda copia de la anterior;
+  - conserva el original;
+  - la saca de `generadas.json`, de modo que pasa a contar como editada a mano y ya no se reemplaza nunca.
+
+  Una duda que era una convención se guarda en `convenciones.md`. Claude no borra ficheros.
+- **`/gymhub:discos <kg>`:** discos por lado con la barra y los discos de la config. La calculadora de la web se pone en ese valor (`.gymhub/discos.json` y `navegar`).
+- **Registro en vivo** (opcional): `/gymhub:entreno [plantilla]`, `/gymhub:serie "…"` y `/gymhub:fin`.
+  - **Entreno:** la rutina es la plantilla pedida o la de hoy. Enseña el calentamiento de §3.1 para el primer ejercicio con barra (barra × 10, 50 % × 5, 70 % × 3, 85 % × 1, redondeado al disco) y el prehab de FICHA.md.
+  - **Serie:** el texto se guarda **tal cual** en `CONTEXTO/AAAA-MM-DD-en-vivo.md`, que luego importa `/gymhub:refresh` como cualquier otro elemento. El script solo marca la casilla del ejercicio que identifica Claude y arranca el descanso (el de la plantilla o `descanso_s_por_defecto`).
+  - **Fin:** pide la sensación y las notas y lanza el flujo de `/refresh`.
+  - **Panel:** la rutina sale «en curso» con sus casillas, y Rex pasa a «levantando» o a «descansando» con la cuenta atrás.
+- **Cuenta atrás y relojes** (§2.9): el script guarda el inicio del descanso en su reloj (WSL) y el desfase con Windows, medido una vez por hora con PowerShell (`.gymhub/reloj.json`). La página resta el desfase. Fuera de WSL el desfase es 0.
+- **Aviso de fin de descanso:** un proceso suelto que espera los segundos del descanso y muestra un toast de Windows (WinRT desde PowerShell, como en Huddle). En macOS, `osascript`; en Linux, `notify-send`. Se desactiva con `aviso_descanso: false` en la config o con `GYMHUB_NO_AVISO=1`. **No se ha lanzado un toast real** en estas pruebas, para no llenarte de avisos; lo cubren los tests con el aviso desactivado.
+- `--` en la línea de órdenes del script: lo que va detrás es texto, aunque empiece por `--`.
+- **Prueba real:** `/gymhub:semana` y `/gymhub:ejercicio banca` en sesiones `claude -p` sobre una demo sintética. El fichero de la semana lleva las cifras del script y los ajustes de Claude, y la web quedó en `#ejercicios/press-banca`.

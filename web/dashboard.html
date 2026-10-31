@@ -320,8 +320,8 @@ function pintarRex() {
   if (!r) return;
   let bocadillo = r.bocadillo;
   if (r.estado === "descansando" && r.descanso) {
-    const pasado = (Date.now() - recibido) / 1000;
-    const quedan = Math.max(0, r.descanso.restante_s - pasado);
+    // El inicio viene en el reloj de WSL y el navegador usa el de Windows: se corrige con el desfase medido.
+    const quedan = Math.max(0, r.descanso.inicio_ms ? r.descanso.segundos - (Date.now() - (r.descanso.desfase_ms || 0) - r.descanso.inicio_ms) / 1000 : r.descanso.restante_s - (Date.now() - recibido) / 1000);
     bocadillo = quedan > 0 ? `descanso ${mmss(quedan)}` : "¡a por la siguiente!";
   }
   bloque("p-rex", { ...r, bocadillo }, () => `<div class="lab" style="align-self:flex-start">Rex</div>
@@ -373,7 +373,7 @@ function pintarPanel() {
   bloque("p-rut", P.rutina, (r) => {
     if (!r) return `<div class="lab">Rutina de hoy</div><div class="vacio">Sin rutina: guarda tus rutinas en plantillas/ o importa unas cuantas sesiones.</div>`;
     const tit = r.origen === "hecha" ? "Hoy has hecho" : "Rutina de hoy";
-    const origen = { hecha: "sesión de hoy", plantilla: "plantilla", rotacion: "según tu rotación" }[r.origen];
+    const origen = { hecha: "sesión de hoy", plantilla: "plantilla", rotacion: "según tu rotación", vivo: "en curso" }[r.origen];
     return `<div class="fila"><span class="lab">${tit} · ${esc(r.titulo.toLowerCase())} <span class="mut">(${origen})</span></span><span class="mut peq">${r.duracion_min ? `~${r.duracion_min} min` : ""}</span></div>
       ${r.ejercicios.map((e) => `<div class="rut"><span>${esc(e.nombre)} <span class="mut peq">${esc(e.prescripcion)}</span></span><span class="casillas">${`<span style="color:${VERDE}">■</span>`.repeat(e.hechas)}<span class="mut">${"□".repeat(Math.max(0, e.total - e.hechas))}</span></span></div>`).join("")}`;
   });
