@@ -88,6 +88,7 @@ for (const p of PERSONAS) {
       cpSync(join(RAIZ, "tests/fixtures/personas", p, "CONTEXTO"), join(carpeta, "CONTEXTO"), { recursive: true });
       const otra = preparar(carpeta);
       assert.equal(otra.imp.lotes.length, 0, "lo ya importado no se vuelve a importar");
+      assert.deepEqual(readdirSync(join(carpeta, "CONTEXTO")).filter((n) => n !== "LEEME.md" && n !== "procesado"), [], "y lo que ya estaba importado entero se archiva aunque no haya nada nuevo");
       await cerrar(carpeta);
       assert.deepEqual(sesionesEn(carpeta), rutas);
     } finally {

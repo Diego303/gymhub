@@ -55,6 +55,8 @@ gymhub es un plugin de Claude Code con una web local como interfaz, pensada para
    ```
 3. Ejecuta `/gymhub:configurar`. Crea la estructura, te pregunta tus objetivos (todo opcional) y abre tu web.
 
+**Paso a paso, del primer día a la rutina de cada semana:** [instrucciones.md](instrucciones.md).
+
 Fuera de esa carpeta el plugin queda desactivado. También funciona instalado para todas tus sesiones (`--scope user`), porque los comandos actúan sobre la carpeta configurada.
 
 ## Uso

@@ -154,3 +154,19 @@ test("guardar --fichero: la entrada desde un fichero de la carpeta (alternativa 
   assert.ok(existsSync(join(carpeta, "sesiones/2026/2026-03-12.md")));
   assert.equal(cli(t.dir, ["refresh", "guardar", "1", "--fichero", "../fuera.md"]).codigo, 1);
 });
+
+test("una nota que crece: se vuelve a copiar entera y solo entra lo nuevo", async () => {
+  contexto("01/03/2026 banca 5x80\n");
+  let { ids } = lote1();
+  guardar(carpeta, 1, `@@@ sesion elementos=${ids[0]}\n${ses("2026-03-01")}`);
+  await cerrar(carpeta);
+  contexto("01/03/2026 banca 5x80\n\n08/03/2026 banca 5x82\n"); // la misma nota, con una semana más
+  const { imp } = preparar(carpeta);
+  assert.equal(imp.lotes.length, 1);
+  assert.equal(imp.lotes[0].ids.length, 1, "solo el bloque nuevo");
+  guardar(carpeta, 1, `@@@ sesion elementos=${imp.lotes[0].ids[0]}\n${ses("2026-03-08", "82 kg")}`);
+  const r = await cerrar(carpeta);
+  assert.equal(r.sesiones, 1);
+  assert.deepEqual(readdirSync(join(carpeta, "sesiones/2026")), ["2026-03-01.md", "2026-03-08.md"]);
+  assert.ok(existsSync(join(carpeta, "CONTEXTO/procesado/2026-10-31/notas-2.txt")), "la segunda copia se archiva junto a la primera");
+});

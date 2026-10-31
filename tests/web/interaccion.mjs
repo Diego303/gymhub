@@ -128,6 +128,15 @@ for (const [nombre, lanzar] of NAVEGADORES) {
     assert.equal(yDespues, Math.min(y, maxY));
     assert.ok(y === 0 || yDespues > 0, "no vuelve arriba");
   });
+  await paso("una sesión con errores de formato se avisa en la cabecera", async () => {
+    const { writeFileSync, rmSync } = await import("node:fs");
+    const f = join(carpeta, "sesiones/2026/2026-10-30-9.md");
+    writeFileSync(f, "---\nfecha: 2026-10-30\n---\n## Ejercicios\n### X\n<!-- id: no-existe -->\n| # | tipo | carga | reps |\n|---|---|---|---|\n| 1 | trabajo | 10 kg | 5 |\n");
+    await derivarCarpeta(carpeta); publicar(carpeta);
+    await page.waitForFunction(() => /1 sesión con errores de formato/.test(document.getElementById("aviso-datos").textContent), null, { timeout: 2500 });
+    rmSync(f); await derivarCarpeta(carpeta); publicar(carpeta);
+    await page.waitForFunction(() => document.getElementById("aviso-datos").textContent === "", null, { timeout: 2500 });
+  });
   await paso("ninguna petición fuera de file://", async () => {
     const fuera = peticiones.filter((u) => !u.startsWith("file://"));
     assert.deepEqual(fuera, []);

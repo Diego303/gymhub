@@ -384,3 +384,10 @@ En todas: `CONTEXTO/` vacío al terminar (todo en `procesado/`), `convenciones.m
 - **Capricho estacional** (como en Huddle): el 31 de octubre Rex lleva una calabaza a los pies y en diciembre un gorro rojo. Lo decide el script por la fecha (`rex.disfraz`).
 - **CHANGELOG** `v0.1.0`.
 - **Pendiente para publicar:** `docs/FORMATO.md` y `docs/maquetas/` no están versionados (decisión tuya). El plugin lee `docs/FORMATO.md` en cada `/gymhub:refresh` (`formato`), y el README enlaza los dos. Instalado desde GitHub, sin ellos, `formato` avisaría de que falta, la skill normalizaría solo con su guía y los enlaces del README fallarían.
+
+## 13. Revisión tras la Fase 8 (2026-10-31)
+
+- **`instrucciones.md`:** guía paso a paso para empezar (carpeta propia, instalación con alcance de proyecto, configurar, primera importación) y para cada semana. Antes de escribirla se comprobaron, con una config aislada, la instalación (`claude plugin install gymhub --marketplace /mnt/d/GitHub/gymhub --scope project`), la desinstalación y `claude plugin list`, y en una sesión real que «apunta que hoy hice banca 3x5 a 80» guarda la sesión con la skill.
+- **Fallo corregido:** si se volvía a dejar en `CONTEXTO/` un fichero ya importado entero (la misma nota del móvil, sin nada nuevo), `/refresh` decía «nada nuevo» pero el fichero se quedaba en `CONTEXTO/` para siempre, porque solo se archivaba al cerrar una importación. Ahora se archiva también en ese caso. Hay dos tests nuevos: una nota que crece y se copia entera solo importa lo nuevo, y lo ya importado se archiva.
+- **Aviso de sesiones con errores de formato:** el dato estaba en `datos.js`, pero no se enseñaba. Ahora sale en la cabecera de la web (con el fichero y el error en el tooltip) y en la salida de `web`, además de en el cierre de `/refresh`. Lo comprueba `pnpm test:web`.
+- Las fechas del frontmatter se escriben sin comillas, como en FORMATO.md.

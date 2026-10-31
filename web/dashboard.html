@@ -222,7 +222,7 @@ function latido() {
   cargar("version.js", (ok) => {
     const v = window.GYMHUB_VERSION;
     if (!ok || !v) { if (++fallos >= 2) $("aviso-datos").textContent = "No se pueden leer los datos (¿se ha movido la carpeta?). Vuelve a abrir la web con /gymhub:web."; return programar(); }
-    fallos = 0; $("aviso-datos").textContent = "";
+    if (fallos) { fallos = 0; $("aviso-datos").textContent = ""; if (D) pintarComun(); }
     if (D && v === D.version) { refrescarRelojes(); return programar(); }
     window.GYMHUB = null;
     cargar("datos.js", (ok2) => {
@@ -263,6 +263,9 @@ function pintarComun() {
   const corta = String(D.carpeta || "").split("/").slice(-2).join("/");
   $("carpeta").textContent = corta ? "· " + corta : "";
   $("cabecera").textContent = [p.semana ? `semana ${p.semana}` : null, p.programa, p.fecha, D.ultimo_refresh ? `refresh ${hace(D.ultimo_refresh)}` : "sin refresh todavía"].filter(Boolean).join(" · ");
+  // Sesiones con errores de formato: no cuentan en las cifras hasta que se corrijan.
+  const errs = D.errores || [];
+  if (!fallos) $("aviso-datos").innerHTML = errs.length ? `▲ ${errs.length} sesi${errs.length === 1 ? "ón" : "ones"} con errores de formato no cuenta${errs.length === 1 ? "" : "n"} en las cifras: ${errs.slice(0, 3).map((e) => `<span data-tt="${esc(e.errores.slice(0, 3).join(" · "))}">${esc(e.ruta)}</span>`).join(", ")}${errs.length > 3 ? "…" : ""} · corrígelas o pídeselo a Claude` : "";
   const pr = D.proceso || {};
   const b = $("banner");
   if (pr.mensaje !== pintarComun.ultimo) { pintarComun.ultimo = pr.mensaje; log("banner=" + (pr.activo ? "activo " : "") + (pr.mensaje || "")); }
