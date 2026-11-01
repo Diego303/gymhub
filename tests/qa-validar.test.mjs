@@ -34,11 +34,27 @@ test("qa:validar encuentra cada tipo de problema, no toca el original y no impri
     for (const re of [/Sesiones: 9 ficheros · 7 válidas · 2 con errores/, /Errores de formato: 2\n\s+sesiones\/2026\/2026-01-12\.md:7\n\s+sesiones\/2026\/2026-01-14\.md:11/,
       /Ejercicios fuera del catálogo: 1\n\s+press-inventado: 1 vez\/veces · sesiones\/2026\/2026-01-12\.md:7/, /líneas no reconocidas[^:]*: 1\n\s+sesiones\/2026\/2026-01-19\.md \(1\)/,
       /Fechas raras \(antes de 1990 o futuras\): 1\n\s+sesiones\/1985\/1985-05-05\.md:2/, /duplicadas[^:]*: 1\n\s+sesiones\/2026\/2026-01-16\.md = sesiones\/2026\/2026-01-16-2\.md/,
-      /Saltos de carga de más del 30 %[^:]*: 1\n\s+sesiones\/2026\/2026-01-07\.md:7 \(press-banca, frente a sesiones\/2026\/2026-01-05\.md\)/,
+      /Saltos de carga de más del 30 % entre sesiones seguidas: 1 \(0 al cambiar de unidad, 1 en ejercicios principales[^)]*\)\n\s+sesiones\/2026\/2026-01-07\.md:7 \(press-banca, frente a sesiones\/2026\/2026-01-05\.md, ejercicio principal\)/,
       /kg y en lb: 1\n\s+press-banca \(5 en kg, 1 en lb\)/, /Original: intacto ✔/]) assert.match(o, re);
     assert.doesNotMatch(o, /Nota muy privada|Título secreto|140|300 lb|100 kg/, "sin notas, títulos ni pesos");
     assert.deepEqual(huella(g), antes, "el original no cambia");
     // Una ruta que no es de gymhub
     assert.equal(spawnSync(process.execPath, [join(RAIZ, "scripts/qa-validar.mjs"), "--datos", t.dir], { encoding: "utf8" }).status, 2);
+  } finally { t.limpiar(); }
+});
+
+test("qa:validar compara la mejor carga de cada sesión con la de la anterior (no dos veces el mismo ejercicio en una sesión)", () => {
+  const t = temporal();
+  try {
+    const g = join(t.dir, "G");
+    cli(t.dir, ["configurar", g]);
+    mkdirSync(join(g, "sesiones", "2026"), { recursive: true });
+    // El mismo ejercicio dos veces en una sesión (pesado y ligero) y la siguiente sesión igual: ningún salto
+    const doble = (f) => ses(f, ["100 kg"]).replace("## Notas", `### X\n<!-- id: press-banca -->\n${CAB}\n| 1 | trabajo | 50 kg | 5 | | | |\n\n## Notas`);
+    writeFileSync(join(g, "sesiones", "2026", "2026-01-05.md"), doble("2026-01-05"));
+    writeFileSync(join(g, "sesiones", "2026", "2026-01-07.md"), doble("2026-01-07"));
+    writeFileSync(join(g, "sesiones", "2026", "2026-01-09.md"), ses("2026-01-09", ["140 kg"]));
+    const r = spawnSync(process.execPath, [join(RAIZ, "scripts/qa-validar.mjs"), "--datos", g], { encoding: "utf8", env: { ...process.env, GYMHUB_HOY: "2026-02-01" } });
+    assert.match(r.stdout, /Saltos de carga de más del 30 % entre sesiones seguidas: 1 \(0 al cambiar de unidad, 1 en ejercicios principales, 0 con cargas de 25 kg o menos, donde un escalón ya es un 30 %, y 0 en el resto\)\n\s+sesiones\/2026\/2026-01-09\.md:7 \(press-banca, frente a sesiones\/2026\/2026-01-07\.md, ejercicio principal\)/);
   } finally { t.limpiar(); }
 });

@@ -74,18 +74,31 @@ try {
     if (s.ejercicios.length) porHuella.set(k, [...(porHuella.get(k) ?? []), s.ruta]);
   }
   for (const rutas of porHuella.values()) if (rutas.length > 1) hallazgos.duplicadas.push(rutas.join(" = "));
-  // Saltos de más del 30 % en la mayor carga de trabajo entre sesiones seguidas del mismo ejercicio, y unidades mezcladas
+  // Saltos de más del 30 % en la mayor carga de trabajo entre sesiones seguidas del mismo ejercicio (la
+  // mejor de cada sesión, aunque el ejercicio salga dos veces en ella), y unidades mezcladas
   const historial = new Map();
+  const tipos = { unidad: 0, baja: 0, principal: 0, otros: 0 };
   for (const s of sesiones) {
+    const deLaSesion = new Map();
     for (const e of s.ejercicios) {
       const id = catalogo.canonico(e.id);
       const trabajo = e.series.filter((x) => ["trabajo", "top", "backoff", "amrap", "dropset", "myo", "cluster"].includes(x.tipo));
       for (const x of trabajo) if (x.carga.tipo === "peso") { const u = hallazgos.unidades.get(id) ?? {}; u[x.carga.unidad] = (u[x.carga.unidad] ?? 0) + 1; hallazgos.unidades.set(id, u); }
       const kg = Math.max(0, ...trabajo.map((x) => kgCarga(x.carga, { pesoCorporal: s.peso_corporal_kg, equivalencia: equivalencias.get(id) }) ?? 0));
       if (!kg) continue;
+      const unidades = new Set(trabajo.filter((x) => x.carga.tipo === "peso").map((x) => x.carga.unidad));
+      const d = deLaSesion.get(id);
+      if (!d || kg > d.kg) deLaSesion.set(id, { kg, linea: e.linea, unidades: new Set([...(d?.unidades ?? []), ...unidades]) });
+      else for (const u of unidades) d.unidades.add(u);
+    }
+    for (const [id, d] of deLaSesion) {
       const previo = historial.get(id);
-      if (previo && Math.abs(kg / previo.kg - 1) > 0.3) hallazgos.saltos.push(`${s.ruta}:${e.linea} (${id}, frente a ${previo.ruta})`);
-      historial.set(id, { kg, ruta: s.ruta });
+      if (previo && Math.abs(d.kg / previo.kg - 1) > 0.3) {
+        const tipo = [...d.unidades].sort().join() !== [...previo.unidades].sort().join() ? "unidad" : Math.max(d.kg, previo.kg) <= 25 ? "baja" : catalogo.obtener(id)?.principal ? "principal" : "otros";
+        tipos[tipo]++;
+        hallazgos.saltos.push(`${s.ruta}:${d.linea} (${id}, frente a ${previo.ruta}${tipo === "unidad" ? ", cambia la unidad" : tipo === "principal" ? ", ejercicio principal" : ""})`);
+      }
+      historial.set(id, { kg: d.kg, ruta: s.ruta, unidades: d.unidades });
     }
   }
   const mezcla = [...hallazgos.unidades].filter(([, u]) => Object.keys(u).length > 1).map(([id, u]) => `${id} (${Object.entries(u).map(([k, n]) => `${n} en ${k}`).join(", ")})`);
@@ -104,7 +117,7 @@ try {
     `- Sesiones con líneas no reconocidas (se conservan, pero no cuentan): ${hallazgos.noReconocidas.length}${lista(hallazgos.noReconocidas)}`,
     `- Fechas raras (antes de 1990 o futuras): ${hallazgos.fechasRaras.length}${lista(hallazgos.fechasRaras)}`,
     `- Sesiones duplicadas (mismo día y mismas series): ${hallazgos.duplicadas.length}${lista(hallazgos.duplicadas)}`,
-    `- Saltos de carga de más del 30 % entre sesiones seguidas: ${hallazgos.saltos.length}${lista(hallazgos.saltos)}`,
+    `- Saltos de carga de más del 30 % entre sesiones seguidas: ${hallazgos.saltos.length}${hallazgos.saltos.length ? ` (${tipos.unidad} al cambiar de unidad, ${tipos.principal} en ejercicios principales, ${tipos.baja} con cargas de 25 kg o menos, donde un escalón ya es un 30 %, y ${tipos.otros} en el resto)` : ""}${lista([...hallazgos.saltos].sort((x, y) => Number(/cambia la unidad/.test(y)) - Number(/cambia la unidad/.test(x)) || Number(/principal/.test(y)) - Number(/principal/.test(x))))}`,
     `- Ejercicios apuntados en kg y en lb: ${mezcla.length}${lista(mezcla)}`,
     `- Avisos de convenciones.md: ${avisosConv.length}`,
     `Original: ${intacto ? "intacto ✔ (no se ha escrito nada)" : "✖ HA CAMBIADO durante la validación"}`,
