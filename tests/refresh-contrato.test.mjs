@@ -101,3 +101,58 @@ test("refresh dos veces seguidas: la segunda no cambia nada salvo la hora del ú
   assert.deepEqual(sinTiempo(huella(carpeta)), sinTiempo(antes));
   assert.deepEqual(datos(), datosAntes);
 });
+
+test("idempotencia por hash: un fichero igual no se reprocesa, uno cambiado sí, y borrar lo procesado no cambia nada", async () => {
+  const { a, b } = prepararDos();
+  guardar(carpeta, 1, `@@@ sesion elementos=${a}\n${sesion("2026-03-12")}@@@ sesion elementos=${b}\n${sesion("2026-03-14", { carga: "82 kg" })}`);
+  await cerrar(carpeta);
+  const procesado = join(carpeta, "CONTEXTO", "procesado", "2026-03-20", "notas.txt");
+  // El mismo fichero copiado otra vez: nada nuevo, y se archiva
+  writeFileSync(join(carpeta, "CONTEXTO", "otra-copia.txt"), readFileSync(procesado, "utf8").replace(/\n/g, "  \n"));
+  assert.equal(preparar(carpeta).imp.lotes.length, 0);
+  assert.equal(existsSync(join(carpeta, "CONTEXTO", "otra-copia.txt")), false);
+  // Cambiado (el 14 pasa a 85 kg): solo ese bloque es nuevo
+  writeFileSync(join(carpeta, "CONTEXTO", "notas.txt"), "12/03/2026\nbanca 5x80\n\n14/03/2026\nbanca 5x85\n");
+  const { imp } = preparar(carpeta);
+  assert.equal(imp.lotes.length, 1);
+  assert.deepEqual(Object.values(imp.elementos).map((e) => e.fecha_pista), ["2026-03-14"]);
+  // Borrar CONTEXTO/procesado no toca el historial ni las cifras
+  const { rmSync } = await import("node:fs");
+  const antes = Object.fromEntries(Object.entries(huella(carpeta)).filter(([k]) => k.startsWith("sesiones/")));
+  rmSync(join(carpeta, "CONTEXTO", "procesado"), { recursive: true, force: true });
+  assert.equal(cli(t.dir, ["publicar", "--carpeta", carpeta]).codigo, 0);
+  assert.deepEqual(Object.fromEntries(Object.entries(huella(carpeta)).filter(([k]) => k.startsWith("sesiones/"))), antes);
+  assert.equal(JSON.parse(readFileSync(join(carpeta, ".gymhub/datos.json"), "utf8")).resumen.sesiones_total, 2);
+});
+
+test("lo editado a mano nunca se pisa: ni al reimportar lo mismo ni si cambia en CONTEXTO/ (va a -2 con su duda)", async () => {
+  const { a, b } = prepararDos();
+  guardar(carpeta, 1, `@@@ sesion elementos=${a}\n${sesion("2026-03-12")}@@@ sesion elementos=${b}\n${sesion("2026-03-14")}`);
+  await cerrar(carpeta);
+  const f = join(carpeta, "sesiones/2026/2026-03-14.md");
+  const editada = readFileSync(f, "utf8").replace("bien", "bien (lo he corregido yo: eran 6 reps)").replace("| 5 | 8 |", "| 6 | 8 |");
+  writeFileSync(f, editada);
+  // 1) El mismo elemento vuelve a importarse (por ejemplo, si se pierde procesados.json)
+  const { rmSync } = await import("node:fs");
+  rmSync(join(carpeta, ".gymhub/procesados.json"));
+  writeFileSync(join(carpeta, "CONTEXTO", "notas.txt"), "12/03/2026\nbanca 5x80\n\n14/03/2026\nbanca 5x82\n");
+  let { imp } = preparar(carpeta);
+  let ids = imp.lotes[0].ids;
+  let r = guardar(carpeta, 1, `@@@ sesion elementos=${ids[0]}\n${sesion("2026-03-12")}@@@ sesion elementos=${ids[1]}\n${sesion("2026-03-14")}`);
+  assert.deepEqual(r.errores, []);
+  assert.equal(readFileSync(f, "utf8"), editada, "la editada no se toca");
+  assert.deepEqual(r.resultado.omitidas, ["sesiones/2026/2026-03-12.md"], "la que no se editó y es igual se omite");
+  assert.deepEqual(r.resultado.duplicadas, ["sesiones/2026/2026-03-14-2.md"]);
+  await cerrar(carpeta);
+  // 2) Editada a mano y cambiada en CONTEXTO/: tampoco se pisa
+  writeFileSync(join(carpeta, "CONTEXTO", "notas-2.txt"), "14/03/2026\nbanca 5x90 (me equivoqué al apuntar)\n");
+  ({ imp } = preparar(carpeta));
+  ids = imp.lotes[0].ids;
+  r = guardar(carpeta, 1, `@@@ sesion elementos=${ids[0]}\n${sesion("2026-03-14", { carga: "90 kg" })}`);
+  assert.deepEqual(r.errores, []);
+  assert.equal(readFileSync(f, "utf8"), editada);
+  assert.deepEqual(r.resultado.duplicadas, ["sesiones/2026/2026-03-14-3.md"]);
+  const rev = readFileSync(join(carpeta, "revision.md"), "utf8");
+  assert.match(rev, /- \[ \] 2026-03-14 · ya había otra sesión ese día con contenido distinto → guardada como sesiones\/2026\/2026-03-14-2\.md\. ¿Son la misma\?/);
+  assert.match(rev, /guardada como sesiones\/2026\/2026-03-14-3\.md/);
+});
