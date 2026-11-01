@@ -87,3 +87,22 @@ test("un cerrojo que dejó un proceso muerto no bloquea la siguiente orden", asy
   writeFileSync(join(dir, "cerrojo", "pid"), String(process.pid));
   assert.throws(() => conCerrojo(dir, () => "no", { esperaMs: 300 }), /otra orden de gymhub está escribiendo/);
 });
+
+test("al archivar un chat terminado, no se llevan las fotos de otro chat que sigue a medias", async () => {
+  const { guardar, cerrar } = await import("../lib/refresh.mjs");
+  const ctx = join(carpeta, "CONTEXTO");
+  const wa = (fecha, texto) => `${fecha}, 18:00 - Ana: ${texto}`;
+  writeFileSync(join(ctx, "chat.txt"), [wa("12/03/2026", "banca 5x80"), wa("12/03/2026", "bien"), wa("12/03/2026", "fin")].join("\n") + "\n");
+  mkdirSync(join(ctx, "otro"));
+  writeFileSync(join(ctx, "otro", "IMG-1.jpg"), Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]));
+  writeFileSync(join(ctx, "otro", "chat.txt"), [wa("01/02/2026", "IMG-1.jpg (archivo adjunto)"), wa("01/02/2026", "pierna"), wa("01/02/2026", "ok")].join("\n") + "\n");
+  const { imp } = preparar(carpeta);
+  // Se guarda solo el lote de marzo (el chat de la raíz); el de febrero queda pendiente
+  const marzo = imp.lotes.find((l) => l.etiqueta === "2026-03");
+  const r = guardar(carpeta, marzo.n, `@@@ sesion elementos=${marzo.ids.join(",")}\n---\nfecha: 2026-03-12\nconfianza: alta\n---\n## Ejercicios\n### Press banca\n<!-- id: press-banca -->\n| # | tipo | carga | reps | rpe | rir | nota |\n|---|---|---|---|---|---|---|\n| 1 | trabajo | 80 kg | 5 | | | |\n`);
+  assert.deepEqual(r.errores, []);
+  const c = await cerrar(carpeta, { forzar: true });
+  assert.deepEqual(c.movidos, ["CONTEXTO/chat.txt"]);
+  assert.ok(existsSync(join(ctx, "otro", "IMG-1.jpg")), "la foto del chat a medias sigue en su sitio");
+  assert.ok(existsSync(join(ctx, "otro", "chat.txt")));
+});
