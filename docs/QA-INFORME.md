@@ -9,13 +9,13 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 | G0 · Inventario y plan | hecho (`f01a0cd`) |
 | G1 · Formato, parser y catálogo | hecho: 16 bugs corregidos |
 | G2 · Métricas | hecho: 5 bugs corregidos; las cifras de las 6 vistas cuadran con el cálculo a mano |
-| G3 · /refresh, idempotencia y datos | pendiente |
+| G3 · /refresh, idempotencia y datos | hecho: 7 bugs corregidos; contrato, idempotencia, ediciones a mano y 100 procesos matados sin corrupción |
 | G4 · Plugin | pendiente |
 | G5 · Web e2e | pendiente |
 | G6 · Rendimiento | pendiente |
 | G7 · Validación de datos reales | pendiente (necesita permiso) |
 
-**Tests:** 165 en `pnpm test`, todos en verde (eran 91), también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
+**Tests:** 182 en `pnpm test`, todos en verde (eran 91), también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
 
 ## Bugs
 
@@ -44,6 +44,13 @@ Gravedad: **crítico** = número incorrecto, pérdida o corrupción de datos, o 
 | B19 | medio | `- press-banca: 0 kg` en FICHA.md salía al 100 % y «conseguido» | División por cero | Un objetivo no positivo no es un objetivo · `90e2923` · «ninguna vista da NaN ni Infinity…» |
 | B20 | crítico (número) | PR falso al apuntar en libras lo mismo que antes en kg: 220,46 lb = 100,0007 kg; 100 kg exportados como 220,5 lb = 100,02 kg. También «mejora» falsa en estancados y nueva «mejor marca» | Comparación con margen 1e-9 | Las cifras en kg se comparan con 0,1 kg de margen (el salto real mínimo es 0,5 kg) · `18aae1c` · «no hay PR falso por cambiar de unidad…» |
 | B21 | bajo | La segunda sesión del día (-2) se ordenaba antes que la primera, -10 antes que -2, y dependía del idioma del sistema; afecta a qué sesión se lleva el PR, al Diario y a la rutina de hoy | `localeCompare` sobre la ruta | Orden por fecha y número de sufijo · `4ee9061` · «dos sesiones del mismo día van en su orden…» |
+| B22 | medio | Si Claude fechaba una sesión a más de 2 meses de la fecha de su mensaje o fichero, entraba sin duda (FORMATO §3.2 pide revisarlo) | No se comprobaba | Duda en revision.md con la fecha de origen · `b13a335` · `refresh-contrato.test.mjs` «fechas cambiadas…» |
+| B23 | alto | Un enlace roto o un fichero sin permiso en CONTEXTO/ tumbaban `refresh preparar` con un error de Node, y la web se quedaba para siempre en «Separando CONTEXTO/…» | `statSync`/`readFileSync` sin control | Se dejan en su sitio, se avisa de cuáles y por qué y se importa el resto; si separar falla, el banner se cierra · `f02a407` · `refresh-robustez.test.mjs` |
+| B24 | medio | Un `.txt` (o un fichero sin extensión) binario se le pasaba a Claude como texto basura | — | Imagen por sus primeros bytes, o binario apartado (se archiva intacto) · `0c52c34` · «un binario con extensión de texto…» |
+| B25 | alto | Una orden matada a mitad dejaba `.gymhub/cerrojo`: la siguiente esperaba 60 s y fallaba, durante 10 minutos | El cerrojo no sabía de quién era | Guarda el pid; si ese proceso no existe, se quita en el acto · `5deda6e` · «un cerrojo que dejó un proceso muerto…» |
+| B26 | crítico (número) | Un ejercicio con U+2028 en el nombre no se reconocía y sus series se sumaban al ejercicio anterior; un título con U+2028 desaparecía | «.» no casa con U+2028/U+2029 | Bandera `s` en el parser y escape al escribir · `94817cb` · «un título con U+2028…» y el generador de propiedades |
+| B27 | medio | Archivar un chat terminado de la raíz de CONTEXTO/ se llevaba las fotos de otro chat a medias, que en la siguiente importación quedaba sin imágenes | `startsWith` sobre carpetas | Cada adjunto se archiva con su propio chat · `925387c` · «al archivar un chat terminado…» |
+| B28 | medio | Un `procesados.json` o `generadas.json` dañado desde fuera se trataba como vacío en silencio | `leerJSON` devuelve el valor por defecto | Copia en `.gymhub/copias/`, aviso y se empieza de cero · `f4964a0` · «un procesados.json o generadas.json dañado…» |
 
 ## Decisiones dudosas (para el autor)
 
