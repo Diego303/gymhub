@@ -97,3 +97,12 @@ test("radar sin datos: n/d en lugar de dividir por cero", async () => {
   assert.equal(radarFuerza(vacia, leerFicha("").referencias), null);
   assert.equal(radarVolumen(vacia), null);
 });
+
+test("dos sesiones del mismo día van en su orden (AAAA-MM-DD.md antes que -2 y que -10), sin depender del idioma del sistema", async () => {
+  const { ordenSesiones } = await import("../lib/base.mjs");
+  const rutas = ["sesiones/2026/2026-03-12-10.md", "sesiones/2026/2026-03-12-2.md", "sesiones/2026/2026-03-13.md", "sesiones/2026/2026-03-12.md"];
+  const s = rutas.map((ruta) => ({ ruta, fecha: ruta.match(/\d{4}-\d{2}-\d{2}/)[0] }));
+  assert.deepEqual([...s].sort(ordenSesiones).map((x) => x.ruta.slice(14)), ["2026-03-12.md", "2026-03-12-2.md", "2026-03-12-10.md", "2026-03-13.md"]);
+  const b = calcularBase([ses("2026-03-12", ["trabajo | 60 kg | 5 | | | "], { id: "press-banca" }), { ...ses("2026-03-12", ["trabajo | 70 kg | 5 | | | "], { id: "press-banca" }), ruta: "sesiones/2026/2026-03-12-2.md" }], { catalogo: CAT, hoy: "2026-03-13", ficha: leerFicha("") });
+  assert.deepEqual(b.sesiones.map((x) => x.ruta), ["sesiones/2026/2026-03-12.md", "sesiones/2026/2026-03-12-2.md"]);
+});
