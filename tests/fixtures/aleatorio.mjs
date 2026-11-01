@@ -25,7 +25,7 @@ export const semillaBase = () => Number(process.env.GYMHUB_SEMILLA ?? 20261101);
 const HOSTILES = [
   "Torso pesado", "Día A · empuje", "Pierna (glúteo)", "Señal: ñandú", "🏋️ fuerza 💪", "<script>alert(1)</script>",
   "<img src=x onerror=alert(1)>", "comillas \"dobles\" y 'simples'", "barra \\ invertida", "a | b | c", "#3 del bloque",
-  "100% esfuerzo", "tab\taquí", "Ünïcödé çà", "x → y ← z", "&amp; &lt;", "</details>", "null", "true", "-5", "007", " espacios ",
+  "100% esfuerzo", "tab\taquí", "Ünïcödé çà", "x → y ← z", "&amp; &lt;", "</details>", "null", "true", "-5", "007", " espacios ", "sep\u2028línea\u2029unicode",
 ];
 const ZONAS = ["hombro", "rodilla", "lumbar", "muñeca", "codo", "cadera", "espalda alta", "tobillo"];
 const ACTIVIDADES = ["cinta", "bici", "remo ergómetro", "elíptica", "carrera | suave"];

@@ -235,3 +235,13 @@ test("espacios al final de la línea del id (<!-- id: … -->   ) no dejan el ej
   assert.deepEqual(r.errores, []);
   assert.equal(r.ejercicios[0].id, "press-banca");
 });
+
+test("un título con U+2028 o U+2029 (separadores de línea Unicode) no se pierde", () => {
+  for (const titulo of ["antes\u2028después", "a\u2029b"]) {
+    const texto = escribirSesion({ ...leerSesion(SESION), titulo });
+    assert.doesNotMatch(texto.split("---")[1], /[\u2028\u2029]/, "en el fichero va escapado");
+    assert.equal(leerSesion(texto).titulo, titulo);
+  }
+  // Y si alguien lo pega tal cual en el frontmatter, también se lee
+  assert.equal(leerSesion(SESION.replace("titulo: Torso", "titulo: Tor\u2028so")).titulo, "Tor\u2028so");
+});
