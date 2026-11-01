@@ -58,3 +58,28 @@ test("un texto original que contiene «</details>» se conserva entero y no se m
   assert.equal(r.original, s.original);
   assert.equal(r.notas, "Bien.");
 });
+
+test("una «|» dentro de una celda se escapa al escribir y se lee entera", () => {
+  const s = leerSesion(SESION);
+  s.ejercicios[0].series[0].nota = "agarre | cerrado";
+  s.cardio = [{ actividad: "cinta | suave", minutos: 20, distancia_km: null, ritmo: null, pulso_medio: null, kcal: null, nota: "a|b" }];
+  const texto = escribirSesion(s);
+  assert.match(texto, /agarre \\\| cerrado/);
+  const r = leerSesion(texto);
+  assert.equal(r.ejercicios[0].series[0].nota, "agarre | cerrado");
+  assert.equal(r.cardio[0].actividad, "cinta | suave");
+  assert.equal(r.cardio[0].nota, "a|b");
+  assert.deepEqual(r.errores, []);
+});
+
+test("una fila con más celdas que la cabecera es un error claro (no se pierde nada en silencio)", () => {
+  const r = leerSesion(SESION.replace("| 1 | trabajo | 80 kg | 5 | 8 | | |", "| 1 | trabajo | 80 kg | 5 | 8 | | agarre | cerrado |"));
+  assert.ok(r.errores.some((e) => /más celdas que la cabecera/.test(e) && /\\\|/.test(e)), r.errores.join("\n"));
+});
+
+test("el borrador de un CSV escapa la «|» de las notas", async () => {
+  const { separarCSV } = await import("../lib/separar.mjs");
+  const [e] = separarCSV("date,exercise,weight,reps,notes\n2026-03-12,Bench,80,5,grip | wide\n", { rel: "CONTEXTO/a.csv" });
+  const r = leerSesion(e.borrador.replace("<!-- id: ? -->", "<!-- id: press-banca -->").replace("fecha: 2026-03-12", "fecha: 2026-03-12"));
+  assert.equal(r.ejercicios[0].series[0].nota, "grip | wide");
+});
