@@ -152,3 +152,9 @@ test("un fichero con BOM y fines de línea de Windows (Bloc de notas) se lee igu
   const { leerRepaso } = await import("../lib/semanas.mjs");
   assert.equal(leerRepaso("\uFEFF---\r\nsemana: 2026-W44\r\n---\r\n## Repaso\r\n- ✓ bien\r\n").semana, "2026-W44");
 });
+
+test("dos secciones desconocidas con el mismo título no se pisan", () => {
+  const r = leerSesion(SESION + "\n## Observaciones\nprimera\n\n## Notas\nbien\n\n## Observaciones\nsegunda\n");
+  assert.equal(r.otras.Observaciones, "primera\n\nsegunda");
+  assert.equal(leerSesion(escribirSesion(r)).otras.Observaciones, "primera\n\nsegunda");
+});
