@@ -70,3 +70,20 @@ test("un fichero enorme (más de 20 MB) no se lee entero: va a Claude como «otr
   assert.equal(e.ruta, f);
   assert.ok(e.texto.length < 200);
 });
+
+test("un cerrojo que dejó un proceso muerto no bloquea la siguiente orden", async () => {
+  const { conCerrojo } = await import("../lib/cerrojo.mjs");
+  const { spawnSync } = await import("node:child_process");
+  const muerto = spawnSync(process.execPath, ["-e", "process.stdout.write(String(process.pid))"], { encoding: "utf8" }).stdout;
+  const dir = join(carpeta, ".gymhub");
+  mkdirSync(join(dir, "cerrojo"), { recursive: true });
+  writeFileSync(join(dir, "cerrojo", "pid"), muerto);
+  const t0 = Date.now();
+  assert.equal(conCerrojo(dir, () => "hecho", { esperaMs: 3000 }), "hecho");
+  assert.ok(Date.now() - t0 < 1000, `tardó ${Date.now() - t0} ms`);
+  assert.equal(existsSync(join(dir, "cerrojo")), false);
+  // Uno vivo sí espera (y avisa al cabo del tiempo)
+  mkdirSync(join(dir, "cerrojo"));
+  writeFileSync(join(dir, "cerrojo", "pid"), String(process.pid));
+  assert.throws(() => conCerrojo(dir, () => "no", { esperaMs: 300 }), /otra orden de gymhub está escribiendo/);
+});
