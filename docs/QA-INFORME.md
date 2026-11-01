@@ -8,14 +8,14 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 |---|---|
 | G0 · Inventario y plan | hecho (`f01a0cd`) |
 | G1 · Formato, parser y catálogo | hecho: 16 bugs corregidos |
-| G2 · Métricas | en curso |
+| G2 · Métricas | hecho: 5 bugs corregidos; las cifras de las 6 vistas cuadran con el cálculo a mano |
 | G3 · /refresh, idempotencia y datos | pendiente |
 | G4 · Plugin | pendiente |
 | G5 · Web e2e | pendiente |
 | G6 · Rendimiento | pendiente |
 | G7 · Validación de datos reales | pendiente (necesita permiso) |
 
-**Tests:** 130 en `pnpm test`, todos en verde (eran 91).
+**Tests:** 165 en `pnpm test`, todos en verde (eran 91), también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
 
 ## Bugs
 
@@ -39,6 +39,11 @@ Gravedad: **crítico** = número incorrecto, pérdida o corrupción de datos, o 
 | B14 | alto | Espacios detrás de `---` invalidaban la sesión entera; detrás de `<!-- id: … -->`, el ejercicio quedaba sin id | Las expresiones exigían el fin de línea exacto | Se toleran (sesiones, plantillas, repasos) · `5045053` · «espacios detrás de los «---»…», «espacios al final de la línea del id…» |
 | B15 | medio | Con `orden: mes/día`, 03/04 se leía bien pero se le pasaba a Claude como «AMBIGUA» | Caso «md» con `ambigua: x !== y` | `ambigua: false` cuando decide la convención · `9f2466b` · «el orden de fechas de convenciones.md decide…» |
 | B16 | medio | Tras arreglar el parser, las carpetas existentes seguían usando sesiones leídas con el parser viejo (caché con versión fija) | `VERSION_CACHE = 2` | La versión es un hash de `canonico.mjs` y `sesiones.mjs` · `d6e053f` · «la caché de sesiones de otra versión…» |
+| B17 | alto | Un ejercicio apuntado a «0 kg» en 4 sesiones (o una asistida con más ayuda que el peso corporal) dejaba la pestaña Análisis entera en «Error al calcular esta vista» | Escala «kg» sin e1RM; `estancados` llamaba a `diasEntre(null, …)` | La escala «kg» exige carga positiva y `estancados` ignora lo que no tiene e1RM · `b48beda` · `metricas-limites.test.mjs` «un ejercicio a «0 kg»…» |
+| B18 | bajo | El sueño medio podía salir «7h 60m» | Se separaban horas y minutos antes de redondear | Se redondea al minuto primero · `4b26368` · «las horas se redondean…» |
+| B19 | medio | `- press-banca: 0 kg` en FICHA.md salía al 100 % y «conseguido» | División por cero | Un objetivo no positivo no es un objetivo · `90e2923` · «ninguna vista da NaN ni Infinity…» |
+| B20 | crítico (número) | PR falso al apuntar en libras lo mismo que antes en kg: 220,46 lb = 100,0007 kg; 100 kg exportados como 220,5 lb = 100,02 kg. También «mejora» falsa en estancados y nueva «mejor marca» | Comparación con margen 1e-9 | Las cifras en kg se comparan con 0,1 kg de margen (el salto real mínimo es 0,5 kg) · `18aae1c` · «no hay PR falso por cambiar de unidad…» |
+| B21 | bajo | La segunda sesión del día (-2) se ordenaba antes que la primera, -10 antes que -2, y dependía del idioma del sistema; afecta a qué sesión se lleva el PR, al Diario y a la rutina de hoy | `localeCompare` sobre la ruta | Orden por fecha y número de sufijo · `4ee9061` · «dos sesiones del mismo día van en su orden…» |
 
 ## Decisiones dudosas (para el autor)
 
