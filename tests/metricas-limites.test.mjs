@@ -5,16 +5,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { calcularBase } from "../lib/base.mjs";
-import { leerSesion } from "../lib/canonico.mjs";
-import { leerCatalogo } from "../lib/catalogo.mjs";
 import { leerFicha } from "../lib/ficha.mjs";
 import { construirAnalisis } from "../lib/analisis.mjs";
+import { CAT, CAB, ses, noFinitos } from "./fixtures/ayuda-metricas.mjs";
 import { RAIZ } from "./ayuda.mjs";
-
-export const CAT = leerCatalogo(readFileSync(join(RAIZ, "templates/GIMNASIO/ejercicios.md"), "utf8"));
-const CAB = "| # | tipo | carga | reps | rpe | rir | nota |\n|---|---|---|---|---|---|---|";
-export const ses = (fecha, filas, { id = "curl-biceps", fm = "" } = {}) =>
-  leerSesion(`---\nfecha: ${fecha}\nconfianza: alta\n${fm}---\n## Ejercicios\n### X\n<!-- id: ${id} -->\n${CAB}\n${filas.map((f, i) => `| ${i + 1} | ${f} |`).join("\n")}\n`, `sesiones/${fecha.slice(0, 4)}/${fecha}.md`);
 
 test("un ejercicio a «0 kg» no rompe la vista Análisis y no cuenta como escala de kg", () => {
   const sesiones = ["2026-09-01", "2026-09-08", "2026-09-15", "2026-09-22", "2026-10-20"].map((f) => ses(f, ["trabajo | 0 kg | 10 | | | "]));
@@ -36,13 +30,6 @@ test("las horas se redondean al minuto sin dar «7h 60m»", async () => {
   assert.equal(horasMinutos(0.004), "0h 00m");
   assert.equal(horasMinutos(null), null);
 });
-
-/** Rutas del objeto con números que no son finitos (JSON.stringify los convertiría en null sin avisar). */
-export function noFinitos(x, ruta = "datos", out = []) {
-  if (typeof x === "number" && !Number.isFinite(x)) out.push(`${ruta} = ${x}`);
-  else if (x && typeof x === "object") for (const [k, v] of Object.entries(x)) noFinitos(v, `${ruta}.${k}`, out);
-  return out;
-}
 
 test("ninguna vista da NaN ni Infinity ni errores: vacío, una sesión, «mini» y una FICHA con ceros", async () => {
   const { temporal } = await import("./ayuda.mjs");
@@ -68,4 +55,45 @@ test("ninguna vista da NaN ni Infinity ni errores: vacío, una sesión, «mini»
       if (nombre === "ceros") assert.deepEqual(datos.panel.objetivos, [], "un objetivo de 0 kg no es un objetivo");
     } finally { delete process.env.GYMHUB_CONFIG; t.limpiar(); }
   }
+});
+
+test("no hay PR falso por cambiar de unidad: 220,46 lb son 100 kg; 225 lb sí es PR", () => {
+  const b = calcularBase([
+    ses("2026-10-01", ["trabajo | 100 kg | 5 | | | "], { id: "press-banca" }), ses("2026-10-03", ["trabajo | 100 kg | 5 | | | "], { id: "press-banca" }),
+    ses("2026-10-05", ["trabajo | 100 kg | 5 | | | "], { id: "press-banca" }), ses("2026-10-07", ["trabajo | 220.46 lb | 5 | | | "], { id: "press-banca" }),
+    ses("2026-10-09", ["trabajo | 225 lb | 5 | | | "], { id: "press-banca" }),
+  ], { catalogo: CAT, hoy: "2026-10-10", ficha: leerFicha("") });
+  // 220,46 × 0,4536 = 99,9999 kg (no supera 100); 225 × 0,4536 = 102,06 kg
+  assert.deepEqual(b.prs.map((p) => p.fecha), ["2026-10-09"]);
+});
+
+test("bloque: una semana de descarga (volumen < 70 % e intensidad < 72 %) se marca; la actual nunca", async () => {
+  const { bloque } = await import("../lib/progreso.mjs");
+  const fechas = { "2026-10-05": 100, "2026-10-12": 100, "2026-10-19": 60, "2026-10-26": 100 };
+  const sesiones = Object.entries(fechas).map(([f, kg]) => ses(f, Array(kg === 60 ? 2 : 5).fill(`trabajo | ${kg} kg | 5 | | | `), { id: "sentadilla" }));
+  const base = calcularBase(sesiones, { catalogo: CAT, hoy: "2026-10-27", ficha: leerFicha("") });
+  const b = bloque({ base, config: {} });
+  // e1RM vigente 116,7: 100 kg es el 85,7 %; la semana del 19, 60 kg (51,4 %) y 2 × 5 × 60 = 600 kg frente a 2.500
+  assert.deepEqual(b.semanas.map((w) => [w.inicio, w.intensidad, w.volumen_pct, w.descarga]), [
+    ["2026-09-21", null, 0, false], ["2026-09-28", null, 0, false], ["2026-10-05", 86, 100, false], ["2026-10-12", 86, 100, false], ["2026-10-19", 51, 24, true], ["2026-10-26", 86, 100, false]]);
+});
+
+test("calendario de 12 semanas: niveles por series de trabajo, hoy y días futuros", async () => {
+  const { calendario, nivelCalendario } = await import("../lib/vistas.mjs");
+  assert.deepEqual([0, 1, 9, 10, 17, 18, 25, 26].map((n) => nivelCalendario(n, false)), [0, 1, 1, 2, 2, 3, 3, 4]);
+  assert.equal(nivelCalendario(0, true), 1, "un día sin detalle cuenta como entrenado");
+  const base = calcularBase([ses("2026-10-27", Array(12).fill("trabajo | 60 kg | 5 | | | "), { id: "press-banca" })], { catalogo: CAT, hoy: "2026-10-28", ficha: leerFicha("") });
+  const cal = calendario({ ...base, pausas: new Set() });
+  assert.equal(cal.semanas.length, 12);
+  assert.ok(cal.semanas.every((c) => c.length === 7));
+  const dias = cal.semanas.flat();
+  assert.deepEqual(dias.find((d) => d.fecha === "2026-10-27"), { fecha: "2026-10-27", futuro: false, pausa: false, nivel: 2, series: 12, sesiones: 1, tipos: [""] });
+  assert.ok(dias.filter((d) => d.fecha > "2026-10-28").every((d) => d.futuro && d.nivel === -1));
+});
+
+test("radar sin datos: n/d en lugar de dividir por cero", async () => {
+  const { radarFuerza, radarVolumen } = await import("../lib/analisis.mjs");
+  const vacia = calcularBase([], { catalogo: CAT, hoy: "2026-10-28", ficha: leerFicha("") });
+  assert.equal(radarFuerza(vacia, leerFicha("").referencias), null);
+  assert.equal(radarVolumen(vacia), null);
 });
