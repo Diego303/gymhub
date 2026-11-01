@@ -157,7 +157,7 @@ claude --plugin-dir .  # probar el plugin sin instalarlo
 - Los tests usan solo datos sintéticos (`tests/fixtures/`): no subas nunca datos reales de entrenamiento.
 - El plan y el informe de QA están en [`docs/QA-PLAN.md`](docs/QA-PLAN.md) y [`docs/QA-INFORME.md`](docs/QA-INFORME.md).
 - `node scripts/e2e-persona.mjs <persona>` importa una de las 5 personas sintéticas con Claude de verdad y compara el resultado con lo esperado.
-- El diseño de la web está en [`docs/maquetas/`](docs/maquetas/) y las decisiones técnicas en [`docs/notas-tecnicas.md`](docs/notas-tecnicas.md).
+- Las decisiones técnicas están en [`docs/notas-tecnicas.md`](docs/notas-tecnicas.md), y las capturas de referencia de cada vista, en [`test/visual/`](test/visual/).
 
 ## Licencia
 

@@ -13,9 +13,9 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 | G4 · Plugin | hecho: 1 bug corregido; el plugin no tiene hooks (esas pruebas no aplican) |
 | G5 · Web e2e | hecho: 4 bugs corregidos (uno de seguridad); cifras, recarga en vivo, XSS, diseño, teclado y capturas de referencia |
 | G6 · Rendimiento | hecho: 1 bug corregido (3 s → 1,3 s); todo dentro de los límites con 5 años |
-| G7 · Validación de datos reales | `pnpm qa:validar` hecho y probado con una carpeta inventada; **sin ejecutar sobre tus datos: necesita tu permiso** |
+| G7 · Validación de datos reales | hecho con permiso del autor, sobre una copia de sus datos: sin errores (detalle abajo, solo agregados); 1 bug del propio validador corregido |
 
-**Tests:** 200 en `pnpm test` (eran 91; 199 en verde y 1 saltado a propósito por D1), 20 e2e y 12 capturas en Playwright, `test:web` en Chromium y Firefox, y `test:rendimiento`. **`pnpm test:todo` en verde tres veces seguidas** (318, 314 y 314 s), con la suite en UTC, Madrid y Los Ángeles.
+**Tests:** 201 en `pnpm test` (eran 91), todos en verde, 20 e2e y 12 capturas en Playwright, `test:web` en Chromium y Firefox, y `test:rendimiento`. **`pnpm test:todo` en verde tres veces seguidas** (318, 314 y 314 s), con la suite en UTC, Madrid y Los Ángeles.
 
 **Cobertura de líneas en `lib/`:**
 - **Total:** 98,3 % (ramas 85,8 %).
@@ -23,7 +23,7 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 - **Resto:** entre el 87,7 % (`vivo`) y el 100 %, y por encima del 85 % en todos (objetivo ≥ 85 %).
 - **Antes del QA:** 93,3 % en total.
 
-**Bugs:** 34 corregidos (B01–B34), cada uno en su commit `fix(...)`. Por gravedad: 11 críticos (9 de números incorrectos o pérdida de datos, 1 de corrupción y 1 XSS), 7 altos, 13 medios y 3 bajos.
+**Bugs:** 35 corregidos (B01–B35), cada uno en su commit `fix(...)`. Por gravedad: 11 críticos (9 de números incorrectos o pérdida de datos, 1 de corrupción y 1 XSS), 7 altos, 13 medios y 4 bajos.
 
 ### Scripts
 
@@ -83,6 +83,7 @@ Gravedad: **crítico** = número incorrecto, pérdida o corrupción de datos, o 
 | B32 | medio | El buscador de Ejercicios distinguía tildes («jalon», «cuadriceps») y no buscaba por alias («bench», «squat») | `toLowerCase().includes` sin quitar tildes; la lista no llevaba alias | Sin tildes ni mayúsculas, por nombre, grupo, id o alias · `6d16df7` · `tests/e2e/vistas.spec.mjs` «Ejercicios…» |
 | B33 | bajo | La tira de 26 semanas (pestaña Semana) se salía de su tarjeta a ~800 px CSS: 1024 px al 125 %, 1280 al 150 %, 1440 al 200 % | Rejilla fija de 13 × 16 px | Celdas de 8 a 16 px, cuadradas · `93ab1c7` · `tests/e2e/adaptable.spec.mjs` |
 | B34 | medio | Con 5 años (~1.000 sesiones, ~20.000 series), recalcular todo tardaba 3 s (límite 2 s); la pestaña Semana sola, 2 s | La intensidad de cada semana filtraba todo el historial con `diasEntre` (2 `Date` por comparación, más de un millón de veces); las menciones compilaban una expresión por frase | e1RM vigente en caché y fechas comparadas como cadenas; una expresión por ejercicio · `4f4db69` · `pnpm test:rendimiento` y `tests/e2e/rendimiento.spec.mjs` |
+| B35 | bajo | `qa:validar` contaba como «salto de más del 30 %» un ejercicio que sale dos veces en la misma sesión (pesado y ligero) | Comparaba cada aparición con la anterior, también dentro de la sesión | Compara la mejor carga de cada sesión con la de la anterior y desglosa los saltos · `eddf811` · `qa-validar.test.mjs` |
 
 ## Comparación con las maquetas (G5)
 
@@ -112,9 +113,13 @@ Capturas de la web real con el fixture «mini» frente a `docs/maquetas/*.html`,
 | Latido sin cambios de versión | no relee `datos.js`; sin tareas de más de 50 ms | — |
 | Pestaña abierta con latido de 0,5 s y datos cambiando (45 s; `GYMHUB_RATO_S=1800` para la media hora) | sin `<script>` acumulados, DOM estable, memoria +< 3 MB | — |
 
-## Decisiones dudosas (para el autor)
+## Decisiones dudosas
 
-- **D1 · `docs/FORMATO.md` sin versionar (bloqueante para publicar).** `main` ya está en GitHub, pero el subcomando `formato` imprime `docs/FORMATO.md`, que no está en el repo. En una instalación desde GitHub, `/gymhub:refresh` y la skill reciben «AVISO: falta docs/FORMATO.md», y Claude normaliza solo con `guardar.md`, sin las reglas de §3 (fechas, notaciones, unidades, calentamiento…). El README también enlaza `docs/FORMATO.md` y `docs/maquetas/`. Recomendación: versionar `docs/FORMATO.md` (y decidir qué pasa con las maquetas). No lo he hecho porque pediste no incluirlo.
+El autor aceptó las recomendaciones: D2–D8 se quedan como están.
+
+
+- **D1 · `docs/FORMATO.md` sin versionar.** ✔ Resuelto: versionado en `5063ec1` (el test que lo compara con el parser ya no se salta). Las maquetas siguen privadas: el README ya no las enlaza.
+  Lo que había: `main` ya está en GitHub, pero el subcomando `formato` imprime `docs/FORMATO.md`, que no está en el repo. En una instalación desde GitHub, `/gymhub:refresh` y la skill reciben «AVISO: falta docs/FORMATO.md», y Claude normaliza solo con `guardar.md`, sin las reglas de §3 (fechas, notaciones, unidades, calentamiento…). El README también enlaza `docs/FORMATO.md` y `docs/maquetas/`. Recomendación: versionar `docs/FORMATO.md` (y decidir qué pasa con las maquetas). No lo he hecho porque pediste no incluirlo.
 - **D2 · Fecha futura = error.** Elegí error (la sesión no cuenta hasta corregirla y la web la enseña en la cabecera) en vez de aviso, con un día de margen por las zonas horarias. La alternativa es contarla con un aviso que la web hoy no muestra.
 - **D3 · Nombre ambiguo = sin resolver.** Un objetivo de FICHA.md con un nombre ambiguo queda sin datos (0 %) en lugar de ir al primer ejercicio de la tabla. Es lo que pretendía el código (`ambiguos`), pero cambia el resultado si alguien tiene alias repetidos.
 - **D4 · Mes de una semana que empieza en domingo.** El encargo de Semana dice «el mes de una semana es el de su jueves». El de QA dice «inicio + 3 días». Para semanas de lunes coinciden. Para semanas de domingo, inicio + 3 es miércoles. Se mantiene el jueves.
@@ -123,15 +128,22 @@ Capturas de la web real con el fixture «mini» frente a `docs/maquetas/*.html`,
 - **D7 · Buscador de Ejercicios por alias** (B32). PLAN §2.4b dice «por nombre o grupo». Lo he ampliado a alias porque el encargo de QA pide sinónimos.
 - **D8 · Columnas obligatorias de una tabla de series** (B08). Sin `carga` o sin `reps`, la sesión es un error (no cuenta hasta corregirla). Antes contaba con las series vacías.
 
-## G7 · Tus datos reales (pendiente de tu permiso)
+## G7 · Validación de los datos reales (con permiso del autor)
 
-`pnpm qa:validar -- --datos <ruta>`:
-- copia a un temporal lo que hace falta (sesiones/, plantillas/, semanas/ y los `.md` de la raíz; no copia `CONTEXTO/` ni `.gymhub/`);
-- valida cada sesión con el catálogo de tu carpeta y su ida y vuelta;
-- lista ejercicios fuera del catálogo, líneas no reconocidas, fechas raras, duplicadas, saltos de más del 30 % y mezcla de kg y lb;
-- al final comprueba que el original no ha cambiado (tamaño, fecha y hash de cada fichero).
+`pnpm qa:validar -- --datos <ruta>` hace esto:
+- copia a un temporal lo que hace falta (sesiones/, plantillas/, semanas/ y los `.md` de la raíz);
+- valida cada sesión con el catálogo de la carpeta y su ida y vuelta;
+- lista ejercicios fuera del catálogo, líneas no reconocidas, fechas raras, duplicadas, saltos de más del 30 % entre sesiones seguidas y mezcla de kg y lb;
+- al final comprueba que el original no ha cambiado.
 
-El informe solo lleva recuentos y `fichero:línea`: ni notas, ni títulos, ni pesos. Está probado con una carpeta inventada (`tests/qa-validar.test.mjs`). **No lo he ejecutado sobre tu carpeta.** Cuando me des permiso, lo lanzo en solo lectura y te paso el resultado.
+El informe solo lleva recuentos y `fichero:línea`.
+
+Se ejecutó sobre una copia de la carpeta del autor (el original quedó intacto y la copia se borró al terminar). Aquí solo van agregados, porque el repo es público:
+- **Formato:** todas las sesiones son válidas y la ida y vuelta es exacta en todas. Ninguna está fuera del catálogo, ni tiene líneas no reconocidas, fechas raras o duplicados.
+- **Saltos de más del 30 %:** salen sobre todo en cargas pequeñas de polea y mancuerna (donde un escalón ya es un 30 %) y tras pausas. Los de los ejercicios principales y los que coinciden con un cambio de unidad se revisaron a mano: son fieles a los apuntes originales.
+- **kg y lb mezclados:** en tres ejercicios de polea. La máquina marca libras y así está apuntado («31lb o 14 kg»). Se respeta FORMATO §3.4: se conserva la primera unidad y la otra va a la nota.
+- **Cálculo y web:** el cálculo completo tarda 1,0 s, sin errores en ninguna vista y sin NaN ni Infinity. Las 6 pestañas en Chromium salen sin errores en la consola.
+- **Un bug del validador.** Comparaba dos veces el mismo ejercicio dentro de una sesión y lo contaba como salto. Corregido en `eddf811` (B35), con test.
 
 ## Notas sobre lo no implementado
 
