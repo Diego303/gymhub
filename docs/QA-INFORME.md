@@ -15,7 +15,15 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 | G6 · Rendimiento | hecho: 1 bug corregido (3 s → 1,3 s); todo dentro de los límites con 5 años |
 | G7 · Validación de datos reales | `pnpm qa:validar` hecho y probado con una carpeta inventada; **sin ejecutar sobre tus datos: necesita tu permiso** |
 
-**Tests:** 198 en `pnpm test` (eran 91) y 31 en Playwright (19 e2e y 12 capturas), todos en verde, también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
+**Tests:** 200 en `pnpm test` (eran 91; 199 en verde y 1 saltado a propósito por D1), 20 e2e y 12 capturas en Playwright, `test:web` en Chromium y Firefox, y `test:rendimiento`. **`pnpm test:todo` en verde tres veces seguidas** (318, 314 y 314 s), con la suite en UTC, Madrid y Los Ángeles.
+
+**Cobertura de líneas en `lib/`:**
+- **Total:** 98,3 % (ramas 85,8 %).
+- **Cálculo y parser:** del 99,1 al 100 % en cada módulo (objetivo ≥ 95 %).
+- **Resto:** entre el 87,7 % (`vivo`) y el 100 %, y por encima del 85 % en todos (objetivo ≥ 85 %).
+- **Antes del QA:** 93,3 % en total.
+
+**Bugs:** 34 corregidos (B01–B34), cada uno en su commit `fix(...)`. Por gravedad: 11 críticos (9 de números incorrectos o pérdida de datos, 1 de corrupción y 1 XSS), 7 altos, 13 medios y 3 bajos.
 
 ### Scripts
 
