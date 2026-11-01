@@ -239,19 +239,25 @@ const cargar = (fichero, alTerminar) => {
   s.onerror = () => { s.remove(); alTerminar(false); };
   document.head.appendChild(s);
 };
-let temporizador = null, fallos = 0;
+let temporizador = null, fallos = 0, fallosDatos = 0;
+// Sin datos que pintar (no hay datos.js, o no se puede leer): en vez de «Cargando…» para siempre, qué hacer.
+const sinDatos = () => !D && (fallos >= 2 || fallosDatos >= 3);
 const programar = () => { clearTimeout(temporizador); temporizador = setTimeout(latido, D && D.proceso && D.proceso.activo ? 500 : 1000); };
 function latido() {
   window.GYMHUB_VERSION = null;
   cargar("version.js", (ok) => {
     const v = window.GYMHUB_VERSION;
-    if (!ok || !v) { if (++fallos >= 2) $("aviso-datos").textContent = "No se pueden leer los datos (¿se ha movido la carpeta?). Vuelve a abrir la web con /gymhub:web."; return programar(); }
+    if (!ok || !v) { if (++fallos >= 2) { $("aviso-datos").textContent = "No se pueden leer los datos (¿se ha movido la carpeta?). Vuelve a abrir la web con /gymhub:web."; if (sinDatos()) pintarVista(); } return programar(); }
     if (fallos) { fallos = 0; $("aviso-datos").textContent = ""; if (D) pintarComun(); }
-    if (D && v === D.version) { refrescarRelojes(); return programar(); }
+    if (D && v === D.version) {
+      if (fallosDatos) { fallosDatos = 0; $("aviso-datos").textContent = ""; pintarComun(); } // vuelve a ser la versión que ya se tiene
+      refrescarRelojes(); return programar();
+    }
     window.GYMHUB = null;
     cargar("datos.js", (ok2) => {
       const d = window.GYMHUB;
       if (ok2 && d && d.version === v) {
+        if (fallosDatos) { fallosDatos = 0; $("aviso-datos").textContent = ""; }
         if (d.version_web && VERSION_WEB.indexOf("__") !== 0 && d.version_web !== VERSION_WEB && sessionStorage.getItem("gymhub-recarga") !== d.version_web) {
           sessionStorage.setItem("gymhub-recarga", d.version_web);
           log("recarga=" + d.version_web);
@@ -260,7 +266,12 @@ function latido() {
         }
         D = d; log("v=" + d.version); alRecibir();
       }
-      else log("datos-incompletos");
+      else {
+        // datos.js a medias o dañado: se sigue con el último estado bueno y, si dura, se avisa (un fallo
+        // suelto puede ser una publicación que llega justo entre los dos ficheros).
+        log("datos-incompletos");
+        if (++fallosDatos >= 3) { $("aviso-datos").textContent = "No se han podido leer los datos nuevos (datos.js incompleto o dañado): se muestra el último estado bueno. Vuelve a publicarlos con /gymhub:web."; if (sinDatos()) pintarVista(); }
+      }
       programar();
     });
   });
@@ -317,12 +328,13 @@ function refrescarRelojes() {
 }
 
 function pintarVista() {
-  if (!D) { pintarCargando(); return; }
+  if (!D) { if (sinDatos()) pintarSinDatos(); else pintarCargando(); return; }
   if (vista === "panel") pintarPanel();
   else if (typeof window["pintar_" + vista] === "function") window["pintar_" + vista]();
   else $("v-" + vista).innerHTML = `<div class="box proximamente mut">Esta vista llega en la siguiente fase.</div>`;
 }
 function pintarCargando() { $("v-" + vista).innerHTML = `<div class="box proximamente mut">Cargando datos…</div>`; }
+function pintarSinDatos() { $("v-" + vista).innerHTML = `<div class="box proximamente mut">Todavía no hay datos que enseñar: ${HINT}. Si ya los importaste, vuelve a abrir la web con /gymhub:web.</div>`; }
 
 // ── Rex (pixel art 13×10, con mancuerna) ──
 const REX = ["....####.....", "....#o####...", "....######...", "....####.....", "#..######....", "########.....", ".######......", "..#..#.......", "..#..#.......", "............."];
