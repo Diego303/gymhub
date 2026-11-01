@@ -206,3 +206,20 @@ molestias:
   }
   assert.match(leerSesion("sin frontmatter").errores[0], /\(línea 1\)/);
 });
+
+test("una fecha en el futuro (un año mal escrito) es un error claro y no cuenta en las cifras", async () => {
+  const { validarSesion } = await import("../lib/canonico.mjs");
+  const futura = leerSesion(SESION.replace(/2026-03-12/g, "2062-03-12"));
+  assert.match(validarSesion(futura, null, { hoy: "2026-11-01" }).join("\n"), /fecha en el futuro «2062-03-12» \(hoy es 2026-11-01\).*\(línea 2\)/);
+  // Mañana se admite (zonas horarias); pasado mañana no.
+  assert.deepEqual(validarSesion(leerSesion(SESION.replace(/2026-03-12/g, "2026-11-02")), null, { hoy: "2026-11-01" }), []);
+  assert.equal(validarSesion(leerSesion(SESION.replace(/2026-03-12/g, "2026-11-03")), null, { hoy: "2026-11-01" }).length, 1);
+  const t = temporal();
+  try {
+    mkdirSync(join(t.dir, "sesiones", "2062"), { recursive: true });
+    writeFileSync(join(t.dir, "sesiones", "2062", "2062-03-12.md"), SESION.replace(/2026-03-12/g, "2062-03-12"));
+    const r = cargarSesiones(t.dir, null, { hoy: "2026-11-01" });
+    assert.equal(r.validas.length, 0);
+    assert.match(r.conErrores[0].errores[0], /fecha en el futuro/);
+  } finally { t.limpiar(); }
+});
