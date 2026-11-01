@@ -10,7 +10,7 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 | G1 · Formato, parser y catálogo | hecho: 16 bugs corregidos |
 | G2 · Métricas | hecho: 5 bugs corregidos; las cifras de las 6 vistas cuadran con el cálculo a mano |
 | G3 · /refresh, idempotencia y datos | hecho: 7 bugs corregidos; contrato, idempotencia, ediciones a mano y 100 procesos matados sin corrupción |
-| G4 · Plugin | pendiente |
+| G4 · Plugin | hecho: 1 bug corregido; el plugin no tiene hooks (esas pruebas no aplican) |
 | G5 · Web e2e | pendiente |
 | G6 · Rendimiento | pendiente |
 | G7 · Validación de datos reales | pendiente (necesita permiso) |
@@ -51,6 +51,7 @@ Gravedad: **crítico** = número incorrecto, pérdida o corrupción de datos, o 
 | B26 | crítico (número) | Un ejercicio con U+2028 en el nombre no se reconocía y sus series se sumaban al ejercicio anterior; un título con U+2028 desaparecía | «.» no casa con U+2028/U+2029 | Bandera `s` en el parser y escape al escribir · `94817cb` · «un título con U+2028…» y el generador de propiedades |
 | B27 | medio | Archivar un chat terminado de la raíz de CONTEXTO/ se llevaba las fotos de otro chat a medias, que en la siguiente importación quedaba sin imágenes | `startsWith` sobre carpetas | Cada adjunto se archiva con su propio chat · `925387c` · «al archivar un chat terminado…» |
 | B28 | medio | Un `procesados.json` o `generadas.json` dañado desde fuera se trataba como vacío en silencio | `leerJSON` devuelve el valor por defecto | Copia en `.gymhub/copias/`, aviso y se empieza de cero · `f4964a0` · «un procesados.json o generadas.json dañado…» |
+| B29 | medio | En WSL sin wslview ni wslpath, `/gymhub:web` fallaba con «spawnSync wslpath ENOENT»; con wslpath pero sin explorer.exe decía «abierta» y el proceso se rompía después (igual sin xdg-open en Linux) | No se comprobaba qué había; el error de `spawn` no se escuchaba | Se comprueba antes y, si no se puede, se da la ruta para abrirla a mano · `5874619` · `abrir.test.mjs` |
 
 ## Decisiones dudosas (para el autor)
 
