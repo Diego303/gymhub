@@ -140,16 +140,22 @@ gymhub registra molestias y lesiones, pero no da consejo médico. Las métricas 
 ## Desarrollo
 
 ```bash
-pnpm install        # solo herramientas de desarrollo (playwright-core para probar la web)
-pnpm test           # tests del núcleo, la importación y los cálculos
-pnpm test:web       # la web en Chromium y Firefox de verdad (Playwright)
-pnpm lint           # la web no hace peticiones de red + validación del plugin
-pnpm demo <carpeta> # una carpeta con 2 años de historial sintético para ver la web
-claude --plugin-dir .   # probar el plugin sin instalarlo
+pnpm install           # solo herramientas de desarrollo (Playwright para probar la web)
+pnpm test              # tests del núcleo, la importación y los cálculos
+pnpm test:web          # la web en Chromium y Firefox de verdad (Playwright)
+pnpm test:e2e          # la web en Chromium: cifras, recarga en vivo, XSS, diseño, teclado y rendimiento
+pnpm test:visual       # capturas de referencia por vista (test/visual/), en claro y oscuro
+pnpm test:rendimiento  # 5 años inventados: métricas < 2 s y datos.js < 1 s
+pnpm test:todo         # todo lo anterior (y la suite en 3 zonas horarias), en orden
+pnpm lint              # la web no hace peticiones de red + validación del plugin
+pnpm demo <carpeta>    # una carpeta con 2 años de historial sintético para ver la web
+pnpm qa:validar -- --datos <carpeta>   # valida una carpeta en solo lectura (recuentos y fichero:línea)
+claude --plugin-dir .  # probar el plugin sin instalarlo
 ```
 
 - Usa pnpm, no npm ni yarn.
 - Los tests usan solo datos sintéticos (`tests/fixtures/`): no subas nunca datos reales de entrenamiento.
+- El plan y el informe de QA están en [`docs/QA-PLAN.md`](docs/QA-PLAN.md) y [`docs/QA-INFORME.md`](docs/QA-INFORME.md).
 - `node scripts/e2e-persona.mjs <persona>` importa una de las 5 personas sintéticas con Claude de verdad y compara el resultado con lo esperado.
 - El diseño de la web está en [`docs/maquetas/`](docs/maquetas/) y las decisiones técnicas en [`docs/notas-tecnicas.md`](docs/notas-tecnicas.md).
 

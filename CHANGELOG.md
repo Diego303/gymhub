@@ -11,6 +11,18 @@
   - navegación con las flechas.
 - `/gymhub:semana` hace tres preguntas, de una en una, y escribe `semanas/AAAA-Www.md` con un formato fijo, que valida el script.
 - `/gymhub:refresh` en sábado o domingo recuerda hacer el repaso si la semana tiene sesiones y no lo tiene.
+- **Revisión de QA** (34 correcciones, detalle en [`docs/QA-INFORME.md`](docs/QA-INFORME.md)). Entre ellas:
+  - Al guardar una sesión ya no se pierden notas de ejercicio, texto suelto, columnas extra ni lo que va tras una `|`.
+  - Las sesiones con BOM, con espacios al final de línea o con U+2028 ya se leen bien.
+  - Ya no hay PR falso al pasar de kg a libras.
+  - Las equivalencias de `nivel` se aceptan escritas como en FORMATO §4.
+  - Un `0 kg` ya no rompe la pestaña Análisis.
+  - Un fichero ilegible ya no tumba `/gymhub:refresh`.
+  - Un cerrojo de un proceso muerto ya no bloquea gymhub.
+  - Se corrige un XSS en los tooltips de la web.
+  - El buscador de Ejercicios ya no distingue tildes y busca también por alias.
+  - Recalcular con 5 años de historial pasa de 3 s a 1,3 s.
+- Los errores de formato dicen en qué línea están, y una fecha en el futuro es un error.
 
 ## v0.1.0 · 2026-10-31
 
