@@ -51,3 +51,10 @@ test("escribirSesion produce lo que leerSesion lee (sesión mínima)", () => {
   assert.deepEqual(s.errores, []);
   assert.equal(escribirSesion(leerSesion(escribirSesion(s))), escribirSesion(s));
 });
+
+test("un texto original que contiene «</details>» se conserva entero y no se mezcla con las notas", () => {
+  const s = { ...leerSesion(SESION), notas: "Bien.", original: "copiado de una web:\n<details>x</details>\nfin del texto" };
+  const r = leerSesion(escribirSesion(s));
+  assert.equal(r.original, s.original);
+  assert.equal(r.notas, "Bien.");
+});
