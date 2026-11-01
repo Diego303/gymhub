@@ -11,11 +11,11 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 | G2 · Métricas | hecho: 5 bugs corregidos; las cifras de las 6 vistas cuadran con el cálculo a mano |
 | G3 · /refresh, idempotencia y datos | hecho: 7 bugs corregidos; contrato, idempotencia, ediciones a mano y 100 procesos matados sin corrupción |
 | G4 · Plugin | hecho: 1 bug corregido; el plugin no tiene hooks (esas pruebas no aplican) |
-| G5 · Web e2e | pendiente |
+| G5 · Web e2e | hecho: 4 bugs corregidos (uno de seguridad); cifras, recarga en vivo, XSS, diseño, teclado y capturas de referencia |
 | G6 · Rendimiento | pendiente |
 | G7 · Validación de datos reales | pendiente (necesita permiso) |
 
-**Tests:** 182 en `pnpm test`, todos en verde (eran 91), también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
+**Tests:** 198 en `pnpm test` (eran 91) y 31 en Playwright (19 e2e y 12 capturas), todos en verde, también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
 
 ## Bugs
 
@@ -52,6 +52,23 @@ Gravedad: **crítico** = número incorrecto, pérdida o corrupción de datos, o 
 | B27 | medio | Archivar un chat terminado de la raíz de CONTEXTO/ se llevaba las fotos de otro chat a medias, que en la siguiente importación quedaba sin imágenes | `startsWith` sobre carpetas | Cada adjunto se archiva con su propio chat · `925387c` · «al archivar un chat terminado…» |
 | B28 | medio | Un `procesados.json` o `generadas.json` dañado desde fuera se trataba como vacío en silencio | `leerJSON` devuelve el valor por defecto | Copia en `.gymhub/copias/`, aviso y se empieza de cero · `f4964a0` · «un procesados.json o generadas.json dañado…» |
 | B29 | medio | En WSL sin wslview ni wslpath, `/gymhub:web` fallaba con «spawnSync wslpath ENOENT»; con wslpath pero sin explorer.exe decía «abierta» y el proceso se rompía después (igual sin xdg-open en Linux) | No se comprobaba qué había; el error de `spawn` no se escuchaba | Se comprueba antes y, si no se puede, se da la ruta para abrirla a mano · `5874619` · `abrir.test.mjs` |
+| B30 | crítico (seguridad) | XSS: un nombre de ejercicio, un motivo de descarga o un error de formato con `<img src=x onerror=…>` se ejecutaba al pasar el ratón por un tooltip | `tt.innerHTML = getAttribute("data-tt")`: leer el atributo deshace el escape | El tooltip escapa todo y solo permite `<br>` y `<b>` · `8b1af89` · `tests/e2e/xss.spec.mjs` (HTML en catálogo, títulos, notas, zonas, programa, hitos, repaso y errores; 6 vistas y todos sus tooltips) |
+| B31 | medio | Un `datos.js` a medias o dañado no avisaba; sin `datos.js`, «Cargando datos…» para siempre (PLAN §2.6 pide aviso) | — | Se queda el último estado bueno con un aviso que se va al volver a publicar; sin datos, instrucciones · `0a32a95` · `tests/e2e/vivo.spec.mjs` |
+| B32 | medio | El buscador de Ejercicios distinguía tildes («jalon», «cuadriceps») y no buscaba por alias («bench», «squat») | `toLowerCase().includes` sin quitar tildes; la lista no llevaba alias | Sin tildes ni mayúsculas, por nombre, grupo, id o alias · `6d16df7` · `tests/e2e/vistas.spec.mjs` «Ejercicios…» |
+| B33 | bajo | La tira de 26 semanas (pestaña Semana) se salía de su tarjeta a ~800 px CSS: 1024 px al 125 %, 1280 al 150 %, 1440 al 200 % | Rejilla fija de 13 × 16 px | Celdas de 8 a 16 px, cuadradas · `93ab1c7` · `tests/e2e/adaptable.spec.mjs` |
+
+## Comparación con las maquetas (G5)
+
+Capturas de la web real con el fixture «mini» frente a `docs/maquetas/*.html`, a 1280 px. La estructura, el orden de los bloques, la rejilla, los colores y la tipografía coinciden en las 6 vistas. Diferencias (ninguna rompe nada; son para que decidas):
+
+- **Todas:** la web real es más ancha (la maqueta se queda en unos 760 px) y la cabecera lleva las 6 pestañas y la carpeta. La maqueta del Panel no tiene pestañas, pero PLAN §2 las pide.
+- **Panel:**
+  - El pie no tiene «próximo: lun · empuje».
+  - La tarjeta de Rex solo enseña «serie 3 de 5 · descanso 1:45» con un entreno en vivo, como pide PLAN §2.5.
+- **Análisis:** un patrón sin datos (n/d) se dibuja en el centro del radar. La maqueta no tiene ese caso. El tooltip dice «n/d».
+- **Diario:** las sesiones sin sensaciones ni sueño muestran «pre — · post — · sueño —». La maqueta solo enseña los que hay.
+- **Ejercicios:** con poco historial, el rango por defecto (1A) aprieta todos los puntos contra el borde derecho. «Todo» se ve mejor.
+- **Semana:** una variación de 0 % sale como «▲ 0 %» en verde.
 
 ## Decisiones dudosas (para el autor)
 
