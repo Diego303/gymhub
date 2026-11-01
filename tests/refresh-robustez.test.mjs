@@ -106,3 +106,16 @@ test("al archivar un chat terminado, no se llevan las fotos de otro chat que sig
   assert.ok(existsSync(join(ctx, "otro", "IMG-1.jpg")), "la foto del chat a medias sigue en su sitio");
   assert.ok(existsSync(join(ctx, "otro", "chat.txt")));
 });
+
+test("un procesados.json o generadas.json dañado se avisa (con copia) en lugar de tratarse como vacío en silencio", () => {
+  writeFileSync(join(carpeta, ".gymhub", "procesados.json"), "{ esto no es JSON");
+  writeFileSync(join(carpeta, ".gymhub", "generadas.json"), "[[[");
+  writeFileSync(join(carpeta, "CONTEXTO", "notas.txt"), "12/03/2026\nbanca 5x80\n");
+  const r = cli(t.dir, ["refresh", "preparar", "--carpeta", carpeta]);
+  assert.equal(r.codigo, 0, r.error);
+  assert.match(r.salida, /AVISO: \.gymhub\/procesados\.json estaba dañado/);
+  assert.match(r.salida, /AVISO: \.gymhub\/generadas\.json estaba dañado/);
+  const copias = readdirSync(join(carpeta, ".gymhub", "copias"));
+  assert.ok(copias.some((n) => n.startsWith("procesados.json.dañado.")), copias.join(", "));
+  assert.equal(readFileSync(join(carpeta, ".gymhub", "copias", copias.find((n) => n.startsWith("procesados.json"))), "utf8"), "{ esto no es JSON");
+});
