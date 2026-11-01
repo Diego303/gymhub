@@ -15,7 +15,7 @@ import { CAT } from "./fixtures/ayuda-metricas.mjs";
 import { prng, semillaBase } from "./fixtures/aleatorio.mjs";
 import { temporal } from "./ayuda.mjs";
 
-const IDS = ["press-banca", "sentadilla", "remo-barra", "peso-muerto", "press-militar", "dominadas", "curl-biceps", "hip-thrust"];
+const IDS = ["press-banca", "sentadilla", "remo-barra", "peso-muerto", "press-militar", "dominadas", "curl-barra", "hip-thrust"];
 const HISTORIALES = Number(process.env.GYMHUB_N_HIST ?? 25);
 const FICHA = leerFicha("## Objetivos\n- dias_semana: 3\n## Datos\n- peso_corporal: 78 kg\n");
 

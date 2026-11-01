@@ -14,7 +14,7 @@ test("un ejercicio a «0 kg» no rompe la vista Análisis y no cuenta como escal
   const sesiones = ["2026-09-01", "2026-09-08", "2026-09-15", "2026-09-22", "2026-10-20"].map((f) => ses(f, ["trabajo | 0 kg | 10 | | | "]));
   const ficha = leerFicha("");
   const base = calcularBase(sesiones, { catalogo: CAT, hoy: "2026-10-31", ficha });
-  assert.equal(base.porEjercicio.get("curl-biceps").escala, "reps");
+  assert.equal(base.porEjercicio.get("curl-barra").escala, "reps");
   const A = construirAnalisis({ base, ficha, config: {}, catalogo: CAT });
   assert.deepEqual(A.estancados, []);
   // Una asistida con más ayuda que el peso corporal (PC−90 con 80 kg) tampoco es «kg»
