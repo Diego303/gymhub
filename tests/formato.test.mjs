@@ -223,3 +223,15 @@ test("una fecha en el futuro (un año mal escrito) es un error claro y no cuenta
     assert.match(r.conErrores[0].errores[0], /fecha en el futuro/);
   } finally { t.limpiar(); }
 });
+
+test("espacios detrás de los «---» del frontmatter no invalidan la sesión", () => {
+  const r = leerSesion(SESION.replace(/^---$/gm, "---  "));
+  assert.deepEqual(r.errores, []);
+  assert.equal(r.titulo, "Torso");
+});
+
+test("espacios al final de la línea del id (<!-- id: … -->   ) no dejan el ejercicio sin id", () => {
+  const r = leerSesion(SESION.replace("<!-- id: press-banca -->", "  <!-- id: press-banca -->   "));
+  assert.deepEqual(r.errores, []);
+  assert.equal(r.ejercicios[0].id, "press-banca");
+});
