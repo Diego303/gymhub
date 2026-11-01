@@ -129,3 +129,15 @@ test("una línea que empieza por «# » dentro de una sección es texto, no se b
   assert.equal(r.calentamiento, s.calentamiento);
   assert.equal(r.titulo, "Torso");
 });
+
+test("los textos del frontmatter no cambian al guardar (barras, tabuladores, espacios, números como texto)", async () => {
+  const { leerYAML } = await import("../lib/canonico.mjs");
+  for (const titulo of ["barra \\ invertida", "tab\taquí", "-5", "-0.5", " espacios ", "007", "null", "a: b", "#3 del bloque", "comillas \"dobles\"", "línea\nnueva", "Ünïcödé 🏋️"]) {
+    const r = leerSesion(escribirSesion({ ...leerSesion(SESION), titulo }));
+    assert.equal(r.titulo, titulo, JSON.stringify(titulo));
+  }
+  // Un valor entre comillas seguido de un comentario
+  assert.equal(leerYAML('titulo: "Torso" # comentario').titulo, "Torso");
+  assert.equal(leerYAML("titulo: 'Torso' # comentario").titulo, "Torso");
+  assert.equal(leerYAML('titulo: "a \\"b\\" c"').titulo, 'a "b" c');
+});
