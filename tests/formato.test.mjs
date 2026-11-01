@@ -83,3 +83,41 @@ test("el borrador de un CSV escapa la «|» de las notas", async () => {
   const r = leerSesion(e.borrador.replace("<!-- id: ? -->", "<!-- id: press-banca -->").replace("fecha: 2026-03-12", "fecha: 2026-03-12"));
   assert.equal(r.ejercicios[0].series[0].nota, "grip | wide");
 });
+
+test("el texto suelto que no es una tabla se conserva al guardar (notas de ejercicio, líneas sueltas, cardio)", () => {
+  const md = `---
+fecha: 2026-03-12
+titulo: Torso
+confianza: alta
+---
+
+# 2026-03-12 · Torso
+Párrafo antes de la primera sección.
+
+## Ejercicios
+Circuito: 3 vueltas, EMOM 12 min.
+
+### Press banca
+<!-- id: press-banca -->
+Agarre cerrado, pausa de 1 s en el pecho.
+| # | tipo | carga | reps | rpe | rir | nota |
+|---|---|---|---|---|---|---|
+| 1 | trabajo | 80 kg | 5 | 8 | | |
+La última costó.
+
+## Cardio
+Intervalos 30/30.
+| actividad | minutos | distancia_km | ritmo | pulso_medio | kcal | nota |
+|---|---|---|---|---|---|---|
+| cinta | 20 | 2.5 | | 130 | | |
+
+## Notas
+Bien.
+`;
+  const a = leerSesion(md);
+  assert.deepEqual(a.errores, []);
+  const b = leerSesion(escribirSesion(a));
+  assert.equal(b.ejercicios[0].nota, "Agarre cerrado, pausa de 1 s en el pecho.\nLa última costó.");
+  assert.deepEqual(b.sueltas, { cabecera: "Párrafo antes de la primera sección.", ejercicios: "Circuito: 3 vueltas, EMOM 12 min.", cardio: "Intervalos 30/30." });
+  assert.equal(escribirSesion(b), escribirSesion(a));
+});
