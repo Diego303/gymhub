@@ -121,3 +121,11 @@ Bien.
   assert.deepEqual(b.sueltas, { cabecera: "Párrafo antes de la primera sección.", ejercicios: "Circuito: 3 vueltas, EMOM 12 min.", cardio: "Intervalos 30/30." });
   assert.equal(escribirSesion(b), escribirSesion(a));
 });
+
+test("una línea que empieza por «# » dentro de una sección es texto, no se borra", () => {
+  const s = { ...leerSesion(SESION), notas: "# 3 series más que la semana pasada\nbien", calentamiento: "# movilidad\nhombro" };
+  const r = leerSesion(escribirSesion(s));
+  assert.equal(r.notas, s.notas);
+  assert.equal(r.calentamiento, s.calentamiento);
+  assert.equal(r.titulo, "Torso");
+});
