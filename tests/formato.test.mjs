@@ -141,3 +141,14 @@ test("los textos del frontmatter no cambian al guardar (barras, tabuladores, esp
   assert.equal(leerYAML("titulo: 'Torso' # comentario").titulo, "Torso");
   assert.equal(leerYAML('titulo: "a \\"b\\" c"').titulo, 'a "b" c');
 });
+
+test("un fichero con BOM y fines de línea de Windows (Bloc de notas) se lee igual", async () => {
+  const conBom = "\uFEFF" + SESION.replace(/\n/g, "\r\n");
+  const r = leerSesion(conBom);
+  assert.deepEqual(r.errores, []);
+  assert.equal(r.ejercicios[0].series[0].carga.valor, 80);
+  const { leerPlantilla } = await import("../lib/plantillas.mjs");
+  assert.equal(leerPlantilla("\uFEFF---\r\nnombre: Pierna A\r\ndia: lunes\r\n---\r\n- Sentadilla · 5×5 · 120 kg\r\n", "a.md").nombre, "Pierna A");
+  const { leerRepaso } = await import("../lib/semanas.mjs");
+  assert.equal(leerRepaso("\uFEFF---\r\nsemana: 2026-W44\r\n---\r\n## Repaso\r\n- ✓ bien\r\n").semana, "2026-W44");
+});
