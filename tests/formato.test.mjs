@@ -158,3 +158,16 @@ test("dos secciones desconocidas con el mismo título no se pisan", () => {
   assert.equal(r.otras.Observaciones, "primera\n\nsegunda");
   assert.equal(leerSesion(escribirSesion(r)).otras.Observaciones, "primera\n\nsegunda");
 });
+
+test("las columnas que no son del formato se conservan y avisan; sin «carga» o «reps» es un error", () => {
+  const extra = SESION.replace("| # | tipo | carga | reps | rpe | rir | nota |\n|---|---|---|---|---|---|---|\n| 1 | trabajo | 80 kg | 5 | 8 | | |",
+    "| # | tipo | carga | reps | rpe | rir | nota | descanso |\n|---|---|---|---|---|---|---|---|\n| 1 | trabajo | 80 kg | 5 | 8 | | | 3 min |");
+  const a = leerSesion(extra);
+  assert.deepEqual(a.errores, []);
+  assert.ok(a.avisos.some((x) => /columna «descanso»/.test(x)), a.avisos.join("\n"));
+  const b = leerSesion(escribirSesion(a));
+  assert.equal(b.ejercicios[0].series[0].extra.descanso, "3 min");
+  assert.match(escribirSesion(b), /\| nota \| descanso \|/);
+  const sinCarga = leerSesion(SESION.replace("| # | tipo | carga | reps |", "| # | tipo | peso | reps |"));
+  assert.ok(sinCarga.errores.some((e) => /Press banca: la tabla no tiene la columna «carga»/.test(e)), sinCarga.errores.join("\n"));
+});
