@@ -38,7 +38,7 @@ test("lo que escribe la persona se ve como texto en las 6 vistas y en sus toolti
     for (const [v, sel] of Object.entries(vistas)) {
       await page.evaluate((x) => { location.hash = x; }, v);
       await expect(page.locator(sel)).toBeVisible();
-      if (v === "diario") for (const e of await page.locator("#d-tl [data-i]").all()) await e.click().catch(() => {});
+      if (v === "diario") for (const e of await page.locator("#d-tl .ent").all()) await e.click().catch(() => {});
       if (v === "semana") { await page.keyboard.press("ArrowLeft"); await page.keyboard.press("ArrowRight"); }
       // Pasar por cada tooltip de la vista (y del aviso de errores de la cabecera)
       await page.evaluate(() => {
