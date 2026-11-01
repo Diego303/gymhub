@@ -171,3 +171,38 @@ test("las columnas que no son del formato se conservan y avisan; sin «carga» o
   const sinCarga = leerSesion(SESION.replace("| # | tipo | carga | reps |", "| # | tipo | peso | reps |"));
   assert.ok(sinCarga.errores.some((e) => /Press banca: la tabla no tiene la columna «carga»/.test(e)), sinCarga.errores.join("\n"));
 });
+
+test("cada error dice en qué línea está", () => {
+  const md = `---
+fecha: 2026-03-12
+titulo: Torso
+sensacion_pre: 14
+molestias:
+  - zona: hombro
+    estado: regular
+---
+
+# 2026-03-12 · Torso
+
+## Ejercicios
+
+### Press banca
+<!-- id: press-banca -->
+| # | tipo | carga | reps | rpe | rir | nota |
+|---|---|---|---|---|---|---|
+| 1 | trabajo | 80 kg | 5 | 8 | | |
+| 2 | trabajo | ochenta | 5 | 12 | | |
+
+### Remo
+| # | tipo | carga | reps | rpe | rir | nota |
+|---|---|---|---|---|---|---|
+| 1 | normal | 60 kg | muchas | | | |
+`;
+  const e = leerSesion(md).errores.join("\n");
+  for (const re of [/sensacion_pre fuera de 0-10 .*\(línea 4\)/, /molestia hombro: estado desconocido .*\(línea 5\)/,
+    /Press banca, serie 2 \(línea 19\): carga no válida «ochenta»/, /Press banca, serie 2 \(línea 19\): RPE fuera de 1-10/,
+    /Remo: falta el id .*\(línea 21\)/, /Remo, serie 1 \(línea 24\): tipo de serie desconocido «normal»/, /Remo, serie 1 \(línea 24\): repeticiones no válidas «muchas»/]) {
+    assert.match(e, re);
+  }
+  assert.match(leerSesion("sin frontmatter").errores[0], /\(línea 1\)/);
+});
