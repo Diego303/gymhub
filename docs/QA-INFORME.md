@@ -12,7 +12,7 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 | G3 · /refresh, idempotencia y datos | hecho: 7 bugs corregidos; contrato, idempotencia, ediciones a mano y 100 procesos matados sin corrupción |
 | G4 · Plugin | hecho: 1 bug corregido; el plugin no tiene hooks (esas pruebas no aplican) |
 | G5 · Web e2e | hecho: 4 bugs corregidos (uno de seguridad); cifras, recarga en vivo, XSS, diseño, teclado y capturas de referencia |
-| G6 · Rendimiento | pendiente |
+| G6 · Rendimiento | hecho: 1 bug corregido (3 s → 1,3 s); todo dentro de los límites con 5 años |
 | G7 · Validación de datos reales | pendiente (necesita permiso) |
 
 **Tests:** 198 en `pnpm test` (eran 91) y 31 en Playwright (19 e2e y 12 capturas), todos en verde, también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
@@ -56,6 +56,7 @@ Gravedad: **crítico** = número incorrecto, pérdida o corrupción de datos, o 
 | B31 | medio | Un `datos.js` a medias o dañado no avisaba; sin `datos.js`, «Cargando datos…» para siempre (PLAN §2.6 pide aviso) | — | Se queda el último estado bueno con un aviso que se va al volver a publicar; sin datos, instrucciones · `0a32a95` · `tests/e2e/vivo.spec.mjs` |
 | B32 | medio | El buscador de Ejercicios distinguía tildes («jalon», «cuadriceps») y no buscaba por alias («bench», «squat») | `toLowerCase().includes` sin quitar tildes; la lista no llevaba alias | Sin tildes ni mayúsculas, por nombre, grupo, id o alias · `6d16df7` · `tests/e2e/vistas.spec.mjs` «Ejercicios…» |
 | B33 | bajo | La tira de 26 semanas (pestaña Semana) se salía de su tarjeta a ~800 px CSS: 1024 px al 125 %, 1280 al 150 %, 1440 al 200 % | Rejilla fija de 13 × 16 px | Celdas de 8 a 16 px, cuadradas · `93ab1c7` · `tests/e2e/adaptable.spec.mjs` |
+| B34 | medio | Con 5 años (~1.000 sesiones, ~20.000 series), recalcular todo tardaba 3 s (límite 2 s); la pestaña Semana sola, 2 s | La intensidad de cada semana filtraba todo el historial con `diasEntre` (2 `Date` por comparación, más de un millón de veces); las menciones compilaban una expresión por frase | e1RM vigente en caché y fechas comparadas como cadenas; una expresión por ejercicio · `4f4db69` · `pnpm test:rendimiento` y `tests/e2e/rendimiento.spec.mjs` |
 
 ## Comparación con las maquetas (G5)
 
@@ -69,6 +70,21 @@ Capturas de la web real con el fixture «mini» frente a `docs/maquetas/*.html`,
 - **Diario:** las sesiones sin sensaciones ni sueño muestran «pre — · post — · sueño —». La maqueta solo enseña los que hay.
 - **Ejercicios:** con poco historial, el rango por defecto (1A) aprieta todos los puntos contra el borde derecho. «Todo» se ve mejor.
 - **Semana:** una variación de 0 % sale como «▲ 0 %» en verde.
+
+## Rendimiento (G6)
+
+5 años inventados (1.036 sesiones, 20.720 series de trabajo), en este equipo (WSL2):
+
+| Medida | Resultado | Límite |
+|---|---|---|
+| Métricas completas en frío (leer 1.036 ficheros, validar, todas las vistas) | 1,27 s | 2 s |
+| Métricas completas con la caché de sesiones | 0,69–0,79 s | 2 s |
+| Publicar `datos.js` | 0,10 s (1.466 KB) | 1 s |
+| Carga inicial de la web (Panel pintado) | 268 ms | — |
+| Primera pintura de cada vista | 11–33 ms | 200 ms |
+| Cambiar de pestaña | 8–20 ms | 100 ms |
+| Latido sin cambios de versión | no relee `datos.js`; sin tareas de más de 50 ms | — |
+| Pestaña abierta con latido de 0,5 s y datos cambiando (45 s; `GYMHUB_RATO_S=1800` para la media hora) | sin `<script>` acumulados, DOM estable, memoria +< 3 MB | — |
 
 ## Decisiones dudosas (para el autor)
 
