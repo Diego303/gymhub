@@ -53,3 +53,28 @@ test("los avisos de convenciones llegan a datos.json y a lo que lee Claude («co
     assert.match(cli(t.dir, ["contexto", "--carpeta", carpeta]).salida, /AVISO: convenciones\.md: el orden de las fechas/);
   } finally { delete process.env.GYMHUB_CONFIG; t.limpiar(); }
 });
+
+test("el orden de fechas de convenciones.md decide las fechas ambiguas al separar CONTEXTO/", async () => {
+  const { separarTexto } = await import("../lib/separar.mjs");
+  const texto = "03/04/2025\nbanca 3x5 60\n\n05/04/2025\nsentadilla 3x5 80\n";
+  const pistas = (orden) => separarTexto(texto, { rel: "CONTEXTO/notas.txt", orden }).map((e) => [e.fecha_pista, e.fecha_ambigua]);
+  assert.deepEqual(pistas(leerOrdenFechas("## Fechas\n- orden: día/mes\n")), [["2025-04-03", false], ["2025-04-05", false]]);
+  assert.deepEqual(pistas(leerOrdenFechas("- orden: mes/día")), [["2025-03-04", false], ["2025-05-04", false]]);
+  // Sin convención, la fecha queda marcada como ambigua para que Claude pregunte
+  assert.ok(pistas(leerOrdenFechas(null)).every(([, ambigua]) => ambigua));
+});
+
+test("sin convenciones.md, todo funciona con los valores por defecto", async () => {
+  const { temporal, cli } = await import("./ayuda.mjs");
+  const { rmSync } = await import("node:fs");
+  const t = temporal();
+  try {
+    const carpeta = join(t.dir, "G");
+    assert.equal(cli(t.dir, ["configurar", carpeta]).codigo, 0);
+    rmSync(join(carpeta, "convenciones.md"));
+    const r = cli(t.dir, ["contexto", "--carpeta", carpeta]);
+    assert.equal(r.codigo, 0, r.error);
+    assert.match(r.salida, /convenciones\.md de esta persona \(todavía vacío\)/);
+    assert.equal(cli(t.dir, ["publicar", "--carpeta", carpeta]).codigo, 0);
+  } finally { t.limpiar(); }
+});
