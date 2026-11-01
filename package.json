@@ -16,7 +16,8 @@
     "demo": "node scripts/demo.mjs",
     "test:e2e": "playwright test --project=e2e",
     "test:visual": "playwright test --project=visual",
-    "test:todo": "node scripts/test-todo.mjs"
+    "test:todo": "node scripts/test-todo.mjs",
+    "test:rendimiento": "node scripts/rendimiento.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
