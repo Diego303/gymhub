@@ -13,9 +13,27 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 | G4 · Plugin | hecho: 1 bug corregido; el plugin no tiene hooks (esas pruebas no aplican) |
 | G5 · Web e2e | hecho: 4 bugs corregidos (uno de seguridad); cifras, recarga en vivo, XSS, diseño, teclado y capturas de referencia |
 | G6 · Rendimiento | hecho: 1 bug corregido (3 s → 1,3 s); todo dentro de los límites con 5 años |
-| G7 · Validación de datos reales | pendiente (necesita permiso) |
+| G7 · Validación de datos reales | `pnpm qa:validar` hecho y probado con una carpeta inventada; **sin ejecutar sobre tus datos: necesita tu permiso** |
 
 **Tests:** 198 en `pnpm test` (eran 91) y 31 en Playwright (19 e2e y 12 capturas), todos en verde, también con `TZ=UTC`, `Europe/Madrid` y `America/Los_Angeles`.
+
+### Scripts
+
+| Script | Qué ejecuta |
+|---|---|
+| `pnpm test` | `node --test`: parser, métricas, /refresh, plugin, CLI. Con `--cobertura`, la de `lib/` |
+| `pnpm test:e2e` | Playwright en Chromium (`file://`): cifras de las 6 vistas, recarga en vivo, XSS, diseño adaptable, teclado y rendimiento de la web |
+| `pnpm test:visual` | Capturas de referencia por vista en `test/visual/`, claro y oscuro |
+| `pnpm test:rendimiento` | 5 años inventados: métricas < 2 s, `datos.js` < 1 s y < 3 MB |
+| `pnpm test:todo` | Todo: `pnpm test` en UTC (con cobertura), Madrid y Los Ángeles, rendimiento, lint, `test:web` (Chromium y Firefox), `test:e2e` y `test:visual` |
+| `pnpm qa:validar -- --datos <ruta>` | G7: validación de solo lectura de una carpeta (recuentos y fichero:línea) |
+
+### Cómo se ha probado lo que no se puede automatizar
+
+- **Normalización con Claude:** se prueban el contrato (validador, idempotencia, protección) y las instrucciones (la skill y `/refresh` cargan formato, guía y contexto; los ejemplos de la skill pasan el validador). La normalización real con un modelo sigue en `scripts/e2e-persona.mjs`, a mano.
+- **Abrir el navegador de Windows:** se prueba la elección del programa con un `PATH` falso (`wslview`, `explorer.exe` + `wslpath -w` y el fallo de los dos). Abrirlo de verdad, a mano.
+- **Instalación desde GitHub:** se prueba la instalación con alcance de proyecto desde el repo local, en una config de Claude aislada. Desde GitHub depende de lo que haya en `main` (ver D1).
+- **Un test intermitente investigado.** «Pestaña abierta mucho rato» falló una vez al ir en paralelo con otros. No se ha vuelto a reproducir en más de 20 pasadas (15 con `--repeat-each=3` y 4 workers, más las de `test:todo`). Las medidas (scripts, nodos y memoria antes y después) van en el mensaje del test por si vuelve a pasar. No se han añadido reintentos.
 
 ## Bugs
 
@@ -92,6 +110,20 @@ Capturas de la web real con el fixture «mini» frente a `docs/maquetas/*.html`,
 - **D2 · Fecha futura = error.** Elegí error (la sesión no cuenta hasta corregirla y la web la enseña en la cabecera) en vez de aviso, con un día de margen por las zonas horarias. La alternativa es contarla con un aviso que la web hoy no muestra.
 - **D3 · Nombre ambiguo = sin resolver.** Un objetivo de FICHA.md con un nombre ambiguo queda sin datos (0 %) en lugar de ir al primer ejercicio de la tabla. Es lo que pretendía el código (`ambiguos`), pero cambia el resultado si alguien tiene alias repetidos.
 - **D4 · Mes de una semana que empieza en domingo.** El encargo de Semana dice «el mes de una semana es el de su jueves». El de QA dice «inicio + 3 días». Para semanas de lunes coinciden. Para semanas de domingo, inicio + 3 es miércoles. Se mantiene el jueves.
+- **D5 · Margen de 0,1 kg al comparar cifras en kg** (B20). Quita los PR falsos por redondeo de libras. A cambio, una mejora real de menos de 0,1 kg de e1RM (imposible con discos) no cuenta como PR.
+- **D6 · Binarios con extensión de texto** (B24). Se apartan como multimedia y se archivan intactos en `procesado/`, sin pasarlos a Claude. Si es una foto sin extensión, va como imagen.
+- **D7 · Buscador de Ejercicios por alias** (B32). PLAN §2.4b dice «por nombre o grupo». Lo he ampliado a alias porque el encargo de QA pide sinónimos.
+- **D8 · Columnas obligatorias de una tabla de series** (B08). Sin `carga` o sin `reps`, la sesión es un error (no cuenta hasta corregirla). Antes contaba con las series vacías.
+
+## G7 · Tus datos reales (pendiente de tu permiso)
+
+`pnpm qa:validar -- --datos <ruta>`:
+- copia a un temporal lo que hace falta (sesiones/, plantillas/, semanas/ y los `.md` de la raíz; no copia `CONTEXTO/` ni `.gymhub/`);
+- valida cada sesión con el catálogo de tu carpeta y su ida y vuelta;
+- lista ejercicios fuera del catálogo, líneas no reconocidas, fechas raras, duplicadas, saltos de más del 30 % y mezcla de kg y lb;
+- al final comprueba que el original no ha cambiado (tamaño, fecha y hash de cada fichero).
+
+El informe solo lleva recuentos y `fichero:línea`: ni notas, ni títulos, ni pesos. Está probado con una carpeta inventada (`tests/qa-validar.test.mjs`). **No lo he ejecutado sobre tu carpeta.** Cuando me des permiso, lo lanzo en solo lectura y te paso el resultado.
 
 ## Notas sobre lo no implementado
 
