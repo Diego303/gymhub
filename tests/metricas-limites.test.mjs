@@ -28,3 +28,11 @@ test("un ejercicio a «0 kg» no rompe la vista Análisis y no cuenta como escal
   assert.equal(asist.porEjercicio.get("dominadas").escala, "lastre");
   assert.equal(asist.sesiones[0].toneladas_kg, 0);
 });
+
+test("las horas se redondean al minuto sin dar «7h 60m»", async () => {
+  const { horasMinutos } = await import("../lib/panel.mjs");
+  assert.equal(horasMinutos(7.995), "8h 00m");
+  assert.equal(horasMinutos(6.75), "6h 45m");
+  assert.equal(horasMinutos(0.004), "0h 00m");
+  assert.equal(horasMinutos(null), null);
+});
