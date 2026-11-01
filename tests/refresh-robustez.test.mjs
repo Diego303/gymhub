@@ -119,3 +119,23 @@ test("un procesados.json o generadas.json dañado se avisa (con copia) en lugar 
   assert.ok(copias.some((n) => n.startsWith("procesados.json.dañado.")), copias.join(", "));
   assert.equal(readFileSync(join(carpeta, ".gymhub", "copias", copias.find((n) => n.startsWith("procesados.json"))), "utf8"), "{ esto no es JSON");
 });
+
+test("varias sesiones de Claude a la vez (guardar y publicar en paralelo) no pierden ni corrompen nada", async () => {
+  const { spawn } = await import("node:child_process");
+  const { BIN } = await import("./ayuda.mjs");
+  const ses = (f) => `@@@ sesion\n---\nfecha: ${f}\ntitulo: Torso\nconfianza: alta\n---\n## Ejercicios\n### Press banca\n<!-- id: press-banca -->\n| # | tipo | carga | reps | rpe | rir | nota |\n|---|---|---|---|---|---|---|\n| 1 | trabajo | 70 kg | 5 | | | |\n\n<details><summary>Original</summary>\n\nbanca 5x70 el ${f}\n\n</details>\n`;
+  const correr = (args, entrada = null) => new Promise((resolve) => {
+    const p = spawn(process.execPath, [BIN, ...args, "--carpeta", carpeta], { env: { ...process.env, GYMHUB_NO_ABRIR: "1" } });
+    let salida = "";
+    p.stdout.on("data", (d) => (salida += d));
+    if (entrada !== null) p.stdin.end(entrada); else p.stdin.end();
+    p.on("exit", (codigo) => resolve({ codigo, salida }));
+  });
+  const fechas = ["2026-03-02", "2026-03-04", "2026-03-06", "2026-03-09", "2026-03-11"];
+  const r = await Promise.all([...fechas.map((f) => correr(["refresh", "guardar", "directo"], ses(f))), correr(["publicar"]), correr(["publicar"]), correr(["web", "--no-abrir"])]);
+  for (const x of r) assert.equal(x.codigo, 0, x.salida);
+  const generadas = JSON.parse(readFileSync(join(carpeta, ".gymhub", "generadas.json"), "utf8"));
+  assert.deepEqual(Object.keys(generadas).sort(), fechas.map((f) => `sesiones/2026/${f}.md`));
+  assert.equal(cli(t.dir, ["publicar", "--carpeta", carpeta]).codigo, 0);
+  assert.equal(JSON.parse(readFileSync(join(carpeta, ".gymhub", "datos.json"), "utf8")).resumen.sesiones_total, 5);
+});
