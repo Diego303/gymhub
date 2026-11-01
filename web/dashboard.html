@@ -169,12 +169,14 @@ const MARCA = "#D85A30", MARCA2 = "#F0997B", MARCA3 = "#F5C4B3", MARCA4 = "#993C
 const HINT = "deja tus entrenos en CONTEXTO/ y usa /gymhub:refresh";
 const hace = (iso) => { if (!iso) return null; const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000); if (s < 90) return "hace un momento"; const m = s / 60; if (m < 60) return `hace ${Math.round(m)} min`; const h = m / 60; if (h < 36) return `hace ${Math.round(h)} h`; return `hace ${Math.round(h / 24)} d`; };
 
-// Tooltip común: cualquier elemento con data-tt
+// Tooltip común: cualquier elemento con data-tt. El valor del atributo llega ya desescapado (lo que era
+// «&lt;img…» vuelve a ser «<img…»), así que se escapa entero otra vez y solo se permiten <br> y <b>.
 const tt = $("tt");
+const htmlTooltip = (t) => esc(t).replace(/&lt;br&gt;/g, "<br>").replace(/&lt;(\/?)b&gt;/g, "<$1b>");
 document.addEventListener("mousemove", (e) => {
   const el = e.target.closest && e.target.closest("[data-tt]");
   if (!el) { tt.style.display = "none"; return; }
-  tt.innerHTML = el.getAttribute("data-tt");
+  tt.innerHTML = htmlTooltip(el.getAttribute("data-tt"));
   tt.style.display = "block";
   const x = Math.min(e.clientX + 12, window.innerWidth - tt.offsetWidth - 8);
   tt.style.left = x + "px"; tt.style.top = (e.clientY + 14) + "px";
