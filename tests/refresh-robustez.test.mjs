@@ -44,3 +44,29 @@ test("un CONTEXTO que no es una carpeta se avisa y la web no se queda en «Separ
   assert.equal(p.activo, false);
   assert.equal(p.fase, "listo");
 });
+
+test("un binario con extensión de texto (o sin extensión) no se le pasa a Claude como texto", async () => {
+  const { separarContexto } = await import("../lib/separar.mjs");
+  const ctx = join(carpeta, "CONTEXTO");
+  writeFileSync(join(ctx, "volcado.txt"), Buffer.from([0x00, 0x01, 0x02, 0xff, 0x00, 0x41, 0x42, 0x00]));
+  writeFileSync(join(ctx, "foto-libreta"), Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64)])); // JPEG sin extensión
+  writeFileSync(join(ctx, "notas.txt"), "12/03/2026 banca 5x80\n");
+  const { elementos } = separarContexto(ctx);
+  const por = Object.fromEntries(elementos.map((e) => [e.fichero, e]));
+  assert.equal(por["CONTEXTO/volcado.txt"].tipo, "multimedia");
+  assert.match(por["CONTEXTO/volcado.txt"].motivo, /binario/);
+  assert.equal(por["CONTEXTO/foto-libreta"].tipo, "imagen");
+  assert.equal(por["CONTEXTO/notas.txt"].tipo, "texto");
+});
+
+test("un fichero enorme (más de 20 MB) no se lee entero: va a Claude como «otro» con su ruta", async () => {
+  const { separarContexto } = await import("../lib/separar.mjs");
+  const { truncateSync } = await import("node:fs");
+  const f = join(carpeta, "CONTEXTO", "export-gigante.txt");
+  writeFileSync(f, "");
+  truncateSync(f, 21 * 1024 * 1024);
+  const [e] = separarContexto(join(carpeta, "CONTEXTO")).elementos.filter((x) => x.fichero.endsWith("gigante.txt"));
+  assert.equal(e.tipo, "otro");
+  assert.equal(e.ruta, f);
+  assert.ok(e.texto.length < 200);
+});
