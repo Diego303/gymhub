@@ -38,3 +38,23 @@ test("fusión: un id puesto como alias de otro se une a él", () => {
   assert.equal(c.buscar("paused bench"), "press-banca");
   assert.deepEqual(c.errores, []);
 });
+
+test("un nombre que encaja con dos ejercicios no se adivina, y el resultado no depende del orden de la tabla", () => {
+  const cab = "| id | nombre | alias | grupo | secundarios | carga | patron | principal |\n|---|---|---|---|---|---|---|---|\n";
+  const a = "| remo-barra | Remo con barra | remo | espalda-alta | biceps | barra | tiron-horizontal | si |";
+  const b = "| remo-ergometro | Remo ergómetro | remo | | | maquina | cardio | no |";
+  for (const t of [cab + a + "\n" + b, cab + b + "\n" + a]) {
+    const c = leerCatalogo(t);
+    assert.ok(c.ambiguos.has("remo"));
+    assert.equal(c.buscar("remo"), null);
+    assert.equal(c.buscar("Remo"), null);
+    assert.equal(c.buscar("remo con barra"), "remo-barra");
+    assert.equal(c.buscar("Remo ergómetro"), "remo-ergometro");
+  }
+});
+
+test("sinónimos, mayúsculas, tildes y guiones llevan al mismo ejercicio", () => {
+  const c = leerCatalogo(TEXTO);
+  for (const n of ["press banca", "PRESS BANCA", "Press Banca", "press-banca", "  press   banca ", "bench press", "BENCH-PRESS"]) assert.equal(c.buscar(n), "press-banca", n);
+  for (const n of ["jalón al pecho", "jalon al pecho", "JALÓN AL PECHO", "lat pulldown"]) assert.equal(c.buscar(n), "jalon-pecho", n);
+});
