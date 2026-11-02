@@ -1,6 +1,7 @@
 // G5 · Capturas de referencia por vista (test/visual/), en claro y en oscuro, con el fixture «mini»
 // (datos inventados, «hoy» fijo y sin hora de refresh). pnpm test:visual compara; para regenerarlas
-// a propósito: pnpm test:visual --update-snapshots
+// a propósito: pnpm test:visual --update-snapshots. Dependen de las fuentes del sistema (los símbolos
+// ★ ◆ ▲ usan una fuente de reserva): si se instalan o cambian fuentes, hay que regenerarlas y revisarlas.
 import { test, expect, abrir } from "./base.mjs";
 
 const VISTAS = ["panel", "progreso", "analisis", "diario", "ejercicios", "semana"];

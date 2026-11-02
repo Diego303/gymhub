@@ -41,6 +41,7 @@ Plan y matriz de pruebas: [`QA-PLAN.md`](QA-PLAN.md). Este informe se mantiene a
 - **Normalización con Claude:** se prueban el contrato (validador, idempotencia, protección) y las instrucciones (la skill y `/refresh` cargan formato, guía y contexto; los ejemplos de la skill pasan el validador). La normalización real con un modelo sigue en `scripts/e2e-persona.mjs`, a mano.
 - **Abrir el navegador de Windows:** se prueba la elección del programa con un `PATH` falso (`wslview`, `explorer.exe` + `wslpath -w` y el fallo de los dos). Abrirlo de verdad, a mano.
 - **Instalación desde GitHub:** se prueba la instalación con alcance de proyecto desde el repo local, en una config de Claude aislada. Desde GitHub depende de lo que haya en `main` (ver D1).
+- **Capturas de referencia y fuentes del sistema.** El 2 de noviembre se instalaron fuentes nuevas en el sistema y ★ y ◆ pasaron a dibujarse con otra fuente de reserva: 4 capturas medían 1 px más. La app no había cambiado. Se regeneraron, y el test avisa de que hay que regenerarlas cuando cambien las fuentes.
 - **Un test intermitente investigado.** «Pestaña abierta mucho rato» falló una vez al ir en paralelo con otros. No se ha vuelto a reproducir en más de 20 pasadas (15 con `--repeat-each=3` y 4 workers, más las de `test:todo`). Las medidas (scripts, nodos y memoria antes y después) van en el mensaje del test por si vuelve a pasar. No se han añadido reintentos.
 
 ## Bugs
